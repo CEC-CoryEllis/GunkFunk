@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GUNK FUNK — Sound Test</title>
+    <style>
+      :root {
+        --bg: #0b0614;
+        --panel: #160c26;
+        --ink: #e9ffd6;
+        --slime: #8cff3a;
+        --funk: #ff4fd8;
+        --gold: #ffd23f;
+        --shadow: #000;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Courier New", ui-monospace, monospace;
+      }
+      #app {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      h1 {
+        margin: 8px 0 0;
+        font-size: 44px;
+        letter-spacing: 6px;
+        color: var(--slime);
+        text-shadow:
+          4px 4px 0 var(--funk),
+          8px 8px 0 var(--shadow);
+      }
+      .subtitle {
+        margin: 6px 0 16px;
+        color: var(--gold);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+      }
+      .status {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        padding: 8px 12px;
+        border: 3px solid var(--slime);
+        background: var(--panel);
+        text-transform: uppercase;
+        font-weight: bold;
+      }
+      .meter {
+        flex: 1 1 200px;
+        height: 14px;
+        border: 2px solid var(--ink);
+        background: #000;
+      }
+      .meter-fill {
+        height: 100%;
+        width: 0;
+        background: var(--slime);
+      }
+      .meter-fill.hot {
+        background: var(--funk);
+      }
+      .panel {
+        margin-top: 16px;
+        padding: 12px;
+        border: 3px solid var(--funk);
+        background: var(--panel);
+        box-shadow: 6px 6px 0 var(--shadow);
+      }
+      h2,
+      h3 {
+        margin: 0 0 8px;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+      }
+      h2 {
+        color: var(--funk);
+      }
+      h3 {
+        margin-top: 10px;
+        color: var(--gold);
+        font-size: 14px;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      button {
+        padding: 6px 10px;
+        border: 2px solid var(--ink);
+        background: #241238;
+        color: var(--ink);
+        font: inherit;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        box-shadow: 3px 3px 0 var(--shadow);
+      }
+      button:hover {
+        background: var(--slime);
+        color: var(--bg);
+      }
+      button:active {
+        transform: translate(3px, 3px);
+        box-shadow: none;
+      }
+      button.active {
+        background: var(--funk);
+        color: var(--bg);
+      }
+      .slider {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        text-transform: uppercase;
+      }
+      .slider input {
+        accent-color: var(--slime);
+      }
+      .slider output {
+        width: 3.5em;
+        color: var(--gold);
+      }
+    </style>
+  </head>
+  <body>
+    <main id="app"></main>
+    <script type="module" src="/src/audio/sound-test/main.ts"></script>
+  </body>
+</html>
