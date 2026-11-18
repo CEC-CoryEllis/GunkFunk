@@ -7,8 +7,8 @@ Disgraced hygiene scientist **Professor Stinkbottom** has dumped his _Funk Juice
 city sewers. **Bulgo** — a lumpy green mutant with a gorilla torso, stubby legs, an underbite
 and boundless dim enthusiasm — crawls out of the muck to stop him. Mostly by accident.
 
-> **Status:** early development. The engine, Bulgo (fully animated) and a movement test
-> stage are playable. See [`CHECKLIST.md`](CHECKLIST.md) for exactly what works and what's
+> **Status:** early development. The engine, Bulgo (fully animated), combat with three
+> upgradeable weapons, and a test stage full of training dummies are playable. See [`CHECKLIST.md`](CHECKLIST.md) for exactly what works and what's
 > next, and [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) for the architecture.
 
 ## Requirements
@@ -52,14 +52,16 @@ npm run preview
 | Move                                              | Arrow keys / WASD              | D-pad / left stick         |
 | Jump (press again in the air to double jump)      | Z / Space / J                  | A / Cross                  |
 | Punch combo (tap ×3: jab → uppercut → belly bump) | X / K                          | X / Square                 |
+| Mega punch (hold punch, release when he flashes)  | Hold X / K                     | Hold X / Square            |
+| Shoot (hold for auto-fire)                        | C / L                          | B / Circle                 |
+| Switch weapon                                     | Shift / E                      | LB / RB                    |
 | Slide                                             | Down while running             | Down while running         |
 | Drop through grates                               | Down + Jump                    | Down + A                   |
 | Climb ladders                                     | Up / Down                      | Up / Down                  |
 | Wall jump                                         | Jump while sliding down a wall | —                          |
 | Pause                                             | Enter / Esc / P                | Start                      |
 
-Shoot, special and weapon switching are bound (C, V, Shift/E) but arrive with milestones
-M4 and M7.
+Special (V) is bound but arrives with the transformations in milestone M7.
 
 ## Checks
 
@@ -75,11 +77,15 @@ Individual scripts: `npm run format`, `npm run lint`, `npm run typecheck`, `npm 
 
 - **Unit tests** (Vitest, `tests/unit/`) cover the pure systems: pixel raster library,
   level parsing, movement physics (jump height, coyote time, jump buffering, wall jumps,
-  slides), melee combo timing and quips.
+  slides), melee combo timing and quips, the combat world, weapon inventory, trigger
+  timing, projectile flight and bouncing, homing, shot patterns and charge timing.
 - **Smoke test** (Playwright, `tests/e2e/smoke.mjs`) starts Vite, walks title → menu →
   stage, drives Bulgo through running, jumping, punching, sliding, hazards, wall slides,
   ladders, pause, idle and death/respawn, asserts the outcomes, saves screenshots to
   `test-results/smoke/`, and fails on any console error.
+- **Combat test** (`tests/e2e/combat.mjs`) collects and upgrades weapons, fires all three
+  at training dummies, switches weapons, throws the charged mega punch and checks that a
+  knocked-off dummy head bowls over its neighbour.
 - **Audio render test** (`tests/e2e/audio-render.mjs`) renders every track, stinger and
   sound effect offline, checks levels/clipping/silence, and writes WAVs to `audio-export/`.
 
