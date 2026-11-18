@@ -46,14 +46,20 @@ function registerSheet(scene: Phaser.Scene, sheet: BuiltSheet): void {
   const texture = scene.textures.addCanvas(sheet.key, toCanvasElement(sheet.canvas))!;
   const columns = sheet.canvas.width / sheet.frameWidth;
   for (let i = 0; i < sheet.frameCount; i++) {
-    texture.add(
+    const frame = texture.add(
       i,
       0,
       (i % columns) * sheet.frameWidth,
       Math.floor(i / columns) * sheet.frameHeight,
       sheet.frameWidth,
       sheet.frameHeight,
-    );
+    )!;
+    // A custom pivot makes Phaser mirror flipped sprites around the authored
+    // origin (between the feet / at the grip). Without it Phaser mirrors around
+    // the frame's centre, which shifts every left-facing sprite off its body.
+    frame.customPivot = true;
+    frame.pivotX = sheet.originX / sheet.frameWidth;
+    frame.pivotY = sheet.originY / sheet.frameHeight;
   }
   for (const anim of sheet.animations) {
     scene.anims.create({
