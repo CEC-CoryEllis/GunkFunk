@@ -6,6 +6,12 @@ import { PixelCanvas } from "./pixel-canvas";
 
 export type FrameDrawer = (canvas: PixelCanvas) => void;
 
+/**
+ * Named points inside a frame (e.g. "hand"), in pixels relative to the sheet
+ * origin, for a sprite facing right. Lets gameplay attach held items exactly.
+ */
+export type FrameAnchors = Readonly<Record<string, { x: number; y: number }>>;
+
 export interface AnimationSpec {
   name: string;
   frames: readonly FrameDrawer[];
@@ -16,6 +22,8 @@ export interface AnimationSpec {
   holds?: readonly number[];
   /** Frames to play after the last one when looping back (yoyo-style) — rarely needed. */
   yoyo?: boolean;
+  /** Optional anchor points, one entry per frame. */
+  anchors?: readonly (FrameAnchors | undefined)[];
 }
 
 export interface SheetSpec {
@@ -48,6 +56,8 @@ export interface BuiltSheet {
   frameCount: number;
   canvas: PixelCanvas;
   animations: BuiltAnimation[];
+  /** Anchor points by global frame index. */
+  frameAnchors: (FrameAnchors | undefined)[];
 }
 
 const SHEET_COLUMNS = 16;
@@ -59,14 +69,16 @@ export function animationKey(sheetKey: string, name: string): string {
 export function buildSheet(spec: SheetSpec): BuiltSheet {
   const frameCanvases: PixelCanvas[] = [];
   const animations: BuiltAnimation[] = [];
+  const frameAnchors: (FrameAnchors | undefined)[] = [];
 
   for (const anim of spec.animations) {
     const start = frameCanvases.length;
-    for (const draw of anim.frames) {
+    anim.frames.forEach((draw, i) => {
       const frame = new PixelCanvas(spec.frameWidth, spec.frameHeight);
       draw(frame);
       frameCanvases.push(frame);
-    }
+      frameAnchors.push(anim.anchors?.[i]);
+    });
     animations.push({
       key: animationKey(spec.key, anim.name),
       name: anim.name,
@@ -94,6 +106,7 @@ export function buildSheet(spec: SheetSpec): BuiltSheet {
     frameCount: frameCanvases.length,
     canvas,
     animations,
+    frameAnchors,
   };
 }
 

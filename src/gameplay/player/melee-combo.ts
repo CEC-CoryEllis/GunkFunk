@@ -66,6 +66,16 @@ export class MeleeCombo {
     return { active };
   }
 
+  /** Starts a one-off attack outside the combo chain (the charged mega punch). */
+  perform(attack: MeleeAttack): MeleeAttack {
+    this.buffered = 0;
+    this.timer = 0;
+    this.swingId++;
+    this.index = -1;
+    this.current = attack;
+    return attack;
+  }
+
   private begin(index: number, onGround: boolean): MeleeAttack {
     this.buffered = 0;
     this.timer = 0;

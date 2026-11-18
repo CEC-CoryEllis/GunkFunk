@@ -32,6 +32,8 @@ export const RAMPS = {
   metal: ramp("#1e2030", "#3e4460", "#6c7898", "#a8b8d0", "#eef4ff"),
   porcelain: ramp("#5a6a88", "#a8b8d4", "#e8f0ff", "#ffffff"),
   slimeGrime: ramp("#2a2a10", "#4a4a1a", "#6e6a28"),
+  burlap: ramp("#3e2614", "#6e4a2a", "#a07646", "#d0a66a"),
+  ratFur: ramp("#2c2838", "#4e4a62", "#7c7896", "#aeaac4"),
 
   // FX / UI
   fire: ramp("#5a0c06", "#c8300c", "#ff8a1a", "#ffe04a", "#fffbe0"),

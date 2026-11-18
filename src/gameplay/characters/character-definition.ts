@@ -4,6 +4,7 @@
  */
 import type { SfxId } from "../../audio/audio-types";
 import type { MovementTuning } from "../player/movement-tuning";
+import type { OwnedWeapon } from "../weapons/weapon-inventory";
 
 export interface HitboxRect {
   /** Relative to the character's feet, facing right. */
@@ -45,7 +46,11 @@ export type QuipTrigger =
   | "respawn"
   | "doubleJump"
   | "wallJump"
-  | "combo";
+  | "combo"
+  | "weaponGet"
+  | "upgrade"
+  | "outOfAmmo"
+  | "megaPunch";
 
 export interface CharacterDefinition {
   id: string;
@@ -59,6 +64,9 @@ export interface CharacterDefinition {
   body: { stand: { w: number; h: number }; low: { w: number; h: number } };
   combo: readonly MeleeAttack[];
   airAttack: MeleeAttack;
+  /** Released after holding punch: the character's heavy signature hit. */
+  chargedAttack: MeleeAttack;
+  startingWeapons: readonly OwnedWeapon[];
   quips: Readonly<Record<QuipTrigger, readonly string[]>>;
   /** Pitch multiplier for the gibberish voice. */
   voicePitch: number;

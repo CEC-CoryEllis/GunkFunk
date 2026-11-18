@@ -2,7 +2,8 @@
  * Bulgo's locomotion animations: idle, walk, run, skid, jumps, landing,
  * crouch, belly-slide, wall-slide and climbing.
  */
-import { type BulgoPose, pose, vary } from "../bulgo-pose";
+import { pose, vary } from "../bulgo-pose";
+import { gaitCycle } from "./gait";
 import type { BulgoAnimation } from "./types";
 
 const idleBase = pose();
@@ -26,34 +27,8 @@ const idle: BulgoAnimation = {
   ],
 };
 
-/** Shared gait generator: `intensity` 0 = waddle, 1 = full sprint. */
-function gaitPose(phase: number, intensity: number): BulgoPose {
-  const s = Math.sin(phase);
-  const c = Math.cos(phase);
-  const stride = 3 + intensity * 2;
-  return pose({
-    x: intensity,
-    y: Math.abs(c) * -(0.8 + intensity * 0.7),
-    sx: 1 + Math.abs(s) * 0.04,
-    sy: 1 - Math.abs(s) * 0.04,
-    lean: intensity * 2,
-    mouth: intensity > 0.5 ? "tongue" : "smirk",
-    hair: -intensity * 2 - Math.abs(c),
-    frontArm: {
-      a1: 0.3 + s * (0.4 + intensity * 0.5),
-      a2: -0.3 - intensity * (0.3 + Math.max(0, s) * 0.4),
-    },
-    backArm: { a1: 0.1 - s * (0.4 + intensity * 0.5), a2: -0.3 - intensity * 0.3 },
-    frontFoot: { dx: s * stride, dy: -Math.max(0, -c) * (2 + intensity) },
-    backFoot: { dx: -s * stride, dy: -Math.max(0, c) * (2 + intensity) },
-  });
-}
-
-const cycle = (n: number, intensity: number) =>
-  Array.from({ length: n }, (_, i) => gaitPose((i / n) * Math.PI * 2, intensity));
-
-const walk: BulgoAnimation = { name: "walk", frameRate: 10, repeat: -1, poses: cycle(8, 0.15) };
-const run: BulgoAnimation = { name: "run", frameRate: 14, repeat: -1, poses: cycle(8, 1) };
+const walk: BulgoAnimation = { name: "walk", frameRate: 10, repeat: -1, poses: gaitCycle(8, 0.15) };
+const run: BulgoAnimation = { name: "run", frameRate: 14, repeat: -1, poses: gaitCycle(8, 1) };
 
 const skid: BulgoAnimation = {
   name: "skid",

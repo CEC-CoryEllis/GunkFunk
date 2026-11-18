@@ -17,6 +17,10 @@ const CHANCE: Readonly<Record<QuipTrigger, number>> = {
   doubleJump: 0.08,
   wallJump: 0.15,
   combo: 0.25,
+  weaponGet: 1,
+  upgrade: 1,
+  outOfAmmo: 1,
+  megaPunch: 0.35,
 };
 
 export class QuipDirector {

@@ -15,9 +15,10 @@ import {
 } from "./fonts/pixel-font";
 import { FONT_CHARS } from "./fonts/glyphs-5x7";
 import type { PixelCanvas } from "./pixel/pixel-canvas";
-import { type BuiltSheet, buildSheet } from "./pixel/sprite-sheet";
+import { type BuiltSheet, type FrameAnchors, buildSheet } from "./pixel/sprite-sheet";
 import { spriteCatalog } from "./sprite-catalog";
 import { bulgoPortrait } from "./sprites/bulgo/bulgo-sheet";
+import { PARTICLE_SIZE, PARTICLE_TEXTURE, buildParticleSheet } from "./sprites/fx/particle-sheet";
 import { buildSewerTileset } from "./tiles/sewer-tileset";
 
 export interface SheetInfo {
@@ -28,6 +29,7 @@ export interface SheetInfo {
 }
 
 const sheetInfo = new Map<string, SheetInfo>();
+const sheetAnchors = new Map<string, (FrameAnchors | undefined)[]>();
 let parallaxLayers: ParallaxLayerArt[] = [];
 
 export const TILESET_KEYS = { sewer: "tiles-sewer" } as const;
@@ -74,6 +76,7 @@ function registerSheet(scene: Phaser.Scene, sheet: BuiltSheet): void {
       yoyo: anim.yoyo,
     });
   }
+  sheetAnchors.set(sheet.key, sheet.frameAnchors);
   sheetInfo.set(sheet.key, {
     frameWidth: sheet.frameWidth,
     frameHeight: sheet.frameHeight,
@@ -100,12 +103,19 @@ function registerFont(scene: Phaser.Scene, style: FontStyle): void {
   scene.cache.bitmapFont.add(key, data);
 }
 
+function registerParticles(scene: Phaser.Scene): void {
+  const { canvas, frames } = buildParticleSheet();
+  const texture = scene.textures.addCanvas(PARTICLE_TEXTURE, toCanvasElement(canvas))!;
+  for (const [name, x] of frames) texture.add(name, 0, x, 0, PARTICLE_SIZE, PARTICLE_SIZE);
+}
+
 export function registerAllArt(scene: Phaser.Scene): void {
   for (const spec of spriteCatalog()) {
     registerSheet(scene, buildSheet(spec));
   }
   scene.textures.addCanvas(TILESET_KEYS.sewer, toCanvasElement(buildSewerTileset()));
   scene.textures.addCanvas(PORTRAIT_KEYS.bulgo, toCanvasElement(bulgoPortrait()));
+  registerParticles(scene);
   parallaxLayers = sewerParallaxLayers();
   for (const layer of parallaxLayers) {
     scene.textures.addCanvas(layer.key, toCanvasElement(layer.canvas));
@@ -125,6 +135,15 @@ export function getSheetInfo(key: string): SheetInfo {
 export function applySheetOrigin(sprite: Phaser.GameObjects.Sprite, key: string): void {
   const info = getSheetInfo(key);
   sprite.setOrigin(info.originX / info.frameWidth, info.originY / info.frameHeight);
+}
+
+/** An anchor point (relative to the origin, facing right) for a frame, if the sheet defines one. */
+export function getFrameAnchor(
+  key: string,
+  frameIndex: number,
+  name: string,
+): { x: number; y: number } | undefined {
+  return sheetAnchors.get(key)?.[frameIndex]?.[name];
 }
 
 export function getParallaxLayers(): readonly ParallaxLayerArt[] {

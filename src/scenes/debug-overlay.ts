@@ -4,7 +4,10 @@
  */
 import type * as Phaser from "phaser";
 import { audio } from "../audio";
+import { GameSession } from "../core/game-session";
 import type { Action } from "../core/input/actions";
+import { TrainingDummy } from "../gameplay/targets/training-dummy";
+import type { WeaponId } from "../gameplay/weapons/weapon-ids";
 import { pixelText } from "../ui/text";
 import type { LevelScene } from "./level-scene";
 
@@ -26,7 +29,16 @@ export interface GunkTestHooks {
     health: number;
     anim: string;
     facing: number;
+    weapon: { id: string; level: number; ammo: number } | null;
+    weapons: string[];
+    shooting: boolean;
+    charging: boolean;
   };
+  dummies(): { x: number; health: number; knockedOut: boolean }[];
+  /** Grants a weapon pickup (test shortcut for upgrades). */
+  collect(id: WeaponId): void;
+  projectiles(): number;
+  score(): number;
   hold(action: Action): void;
   release(action: Action): void;
   teleport(x: number, y: number): void;
@@ -61,7 +73,9 @@ export class DebugOverlay {
     this.graphics.clear();
     const hitbox = p.attackHitbox();
     if (hitbox) {
-      this.graphics.lineStyle(1, 0xff3060, 1).strokeRectShape(hitbox);
+      this.graphics
+        .lineStyle(1, 0xff3060, 1)
+        .strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
     }
   }
 }
@@ -82,8 +96,19 @@ function installTestHooks(scene: LevelScene): void {
         health: p.health.health,
         anim: p.sprite.anims.currentAnim?.key ?? "",
         facing: p.facing,
+        weapon: p.combat.inventory.current && { ...p.combat.inventory.current },
+        weapons: p.combat.inventory.all.map((w) => `${w.id}${w.level}`),
+        shooting: p.lastCombat?.shooting ?? false,
+        charging: p.lastCombat?.charging ?? false,
       };
     },
+    dummies: () =>
+      scene.entities
+        .filter((e): e is TrainingDummy => e instanceof TrainingDummy)
+        .map((d) => ({ x: d.x, health: d.health, knockedOut: d.knockedOut })),
+    projectiles: () => scene.projectiles.count,
+    collect: (id) => void scene.player.collectWeapon(id),
+    score: () => GameSession.get(scene.game).score,
     hold: (action) => scene.inputSource.setScripted(action, true),
     release: (action) => scene.inputSource.setScripted(action, false),
     audio: () => ({ unlocked: audio.unlocked, track: audio.music.currentTrack }),

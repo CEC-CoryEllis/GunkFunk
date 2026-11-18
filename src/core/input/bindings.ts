@@ -39,12 +39,15 @@ export const PLAYER_ONE_BINDINGS: Bindings = {
 
 /**
  * Human-readable control summary for menus and the README. Only lists what is
- * implemented — shoot / special / weapon switch arrive with M4 and M7.
+ * implemented — special arrives with the transformations in M7.
  */
 export const CONTROL_HINTS: readonly [string, string][] = [
   ["MOVE", "ARROWS / WASD"],
   ["JUMP", "Z / SPACE  (x2!)"],
   ["PUNCH COMBO", "X  (TAP 3X)"],
+  ["MEGA PUNCH", "HOLD X, LET GO"],
+  ["SHOOT", "C  (HOLD)"],
+  ["SWITCH WEAPON", "SHIFT / E"],
   ["SLIDE", "DOWN WHILE RUNNING"],
   ["DROP DOWN", "DOWN + JUMP"],
   ["CLIMB", "UP / DOWN ON LADDER"],
