@@ -104,3 +104,20 @@ describe("CombatWorld", () => {
     expect(knockbackFor(makeHit({ knockbackX: -90 }), 999)).toBe(-90);
   });
 });
+
+describe("CombatWorld re-entrancy", () => {
+  it("does not strike targets registered while the strike is being resolved", () => {
+    const world = new CombatWorld();
+    const spawned = new Target("enemy", { x: 0, y: 0, width: 10, height: 10 });
+    const splitter = new Target("enemy", { x: 0, y: 0, width: 10, height: 10 });
+    splitter.takeHit = (hit) => {
+      splitter.hits.push(hit);
+      world.register(spawned); // e.g. a blob splitting into a new blob
+      return { applied: true, defeated: false };
+    };
+    world.register(splitter);
+    world.strike(AREA, makeHit());
+    expect(splitter.hits).toHaveLength(1);
+    expect(spawned.hits).toHaveLength(0);
+  });
+});

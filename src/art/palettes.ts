@@ -34,6 +34,8 @@ export const RAMPS = {
   slimeGrime: ramp("#2a2a10", "#4a4a1a", "#6e6a28"),
   burlap: ramp("#3e2614", "#6e4a2a", "#a07646", "#d0a66a"),
   ratFur: ramp("#2c2838", "#4e4a62", "#7c7896", "#aeaac4"),
+  roachShell: ramp("#1e0c06", "#4a2210", "#7e4018", "#b8702e", "#f0b070"),
+  turnip: ramp("#3a0c4a", "#6e1e86", "#a84cbc", "#e6c8ee", "#ffffff"),
 
   // FX / UI
   fire: ramp("#5a0c06", "#c8300c", "#ff8a1a", "#ffe04a", "#fffbe0"),

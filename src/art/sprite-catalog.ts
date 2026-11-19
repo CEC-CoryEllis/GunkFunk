@@ -6,6 +6,11 @@
 import type { SheetSpec } from "./pixel/sprite-sheet";
 import { bulgoSheetSpec } from "./sprites/bulgo/bulgo-sheet";
 import { dummySheetSpec } from "./sprites/dummy/dummy-sheet";
+import { blobSheetSpec } from "./sprites/enemies/blob-sheet";
+import { ratSheetSpec } from "./sprites/enemies/rat-sheet";
+import { roachSheetSpec } from "./sprites/enemies/roach-sheet";
+import { toiletSheetSpec } from "./sprites/enemies/toilet-sheet";
+import { turnipSheetSpec } from "./sprites/enemies/turnip-sheet";
 import { fxSheetSpecs } from "./sprites/fx/fx-sheets";
 import { sludgeSheetSpec } from "./sprites/hazards/sludge";
 import { heldWeaponSheetSpec } from "./sprites/weapons/held-weapons";
@@ -22,5 +27,10 @@ export function spriteCatalog(): SheetSpec[] {
     pickupSheetSpec(),
     weaponIconSheetSpec(),
     dummySheetSpec(),
+    ratSheetSpec(),
+    toiletSheetSpec(),
+    blobSheetSpec(),
+    turnipSheetSpec(),
+    roachSheetSpec(),
   ];
 }

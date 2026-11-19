@@ -76,7 +76,8 @@ export class PlayerCombat {
     const mega = charge.release ? this.combo.perform(this.character.chargedAttack) : undefined;
     const step = this.combo.update(dt, canMelee && !mega && input.pressed.attack, ctx.onGround);
 
-    const canShoot = ctx.canAct && mobile && !ctx.crouching && !this.combo.busy && !charge.charging;
+    // Crouching is allowed: crouch-shots fly low enough to hit rats and blobs.
+    const canShoot = ctx.canAct && mobile && !this.combo.busy && !charge.charging;
     const trigger = this.trigger.update(
       dt,
       canShoot && input.held.shoot,

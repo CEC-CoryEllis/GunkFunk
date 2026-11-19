@@ -14,6 +14,7 @@ export const PARTICLE_FRAMES = {
   lint: "lint",
   slime: "slime",
   spark: "spark",
+  stink: "stink",
 } as const;
 
 const SIZE = 8;
@@ -57,6 +58,16 @@ const MAPS: Readonly<Record<keyof typeof PARTICLE_FRAMES, readonly string[]>> = 
     ".kgggk..",
     ".kgdgk..",
     "..kkk...",
+    "........",
+  ],
+  stink: [
+    "........",
+    "..dgg...",
+    ".dgllg..",
+    "dgglggd.",
+    "dgggggd.",
+    ".dgggd..",
+    "..ddd...",
     "........",
   ],
   spark: [

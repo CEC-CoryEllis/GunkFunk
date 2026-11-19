@@ -208,8 +208,8 @@ export class ProjectileSystem {
     const hit = this.hitInfo(p, "explosion");
     audio.sfx.play(p.def.hitSfx);
     this.fx.burst(p.body.x, p.body.y);
-    this.fx.particles("feather", p.body.x, p.body.y, 14);
-    this.fx.shake(0.45);
+    this.fx.particles(p.def.particle, p.body.x, p.body.y, 14);
+    this.fx.shake(p.def.impact * 0.55);
     for (const o of this.combat.strike(rectAround(p.body.x, p.body.y, radius), hit)) {
       presentHit(this.fx, hit, o.result, p.def.words);
     }

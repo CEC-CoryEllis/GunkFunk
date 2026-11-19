@@ -8,7 +8,10 @@ import { TILESET_KEYS } from "../art/texture-registry";
 import { INTERIOR_VARIANTS, TILE } from "../art/tiles/tile-ids";
 import { animationKey } from "../art/pixel/sprite-sheet";
 import { TILE_SIZE } from "../config/display";
+import type { Rect } from "../gameplay/combat/hit-types";
 import type { LevelDefinition, ParsedLevel, TerrainKind } from "./level-format";
+
+export type Hazard = "sludge" | "spikes";
 import { horizontalRuns, parseLevel, solidMask, terrainAt } from "./level-parser";
 
 const EMPTY_TILE = -1;
@@ -114,14 +117,38 @@ export class LevelWorld {
   }
 
   /** True if any of the sampled points inside the rectangle touches the given terrain. */
-  rectTouches(rect: Phaser.Geom.Rectangle, kind: TerrainKind): boolean {
-    for (let y = rect.top + 1; y < rect.bottom; y += TILE_SIZE / 2) {
-      for (let x = rect.left + 1; x < rect.right; x += TILE_SIZE / 2) {
+  rectTouches(rect: Rect, kind: TerrainKind): boolean {
+    const right = rect.x + rect.width;
+    const bottom = rect.y + rect.height;
+    for (let y = rect.y + 1; y < bottom; y += TILE_SIZE / 2) {
+      for (let x = rect.x + 1; x < right; x += TILE_SIZE / 2) {
         if (this.terrainAtWorld(x, y) === kind) return true;
       }
-      if (this.terrainAtWorld(rect.right - 1, y) === kind) return true;
+      if (this.terrainAtWorld(right - 1, y) === kind) return true;
     }
-    return this.terrainAtWorld(rect.centerX, rect.bottom - 1) === kind;
+    return this.terrainAtWorld(rect.x + rect.width / 2, bottom - 1) === kind;
+  }
+
+  /** The hazard (if any) touching a rectangle — usually an entity's feet. Sludge wins ties. */
+  hazardAt(rect: Rect): Hazard | null {
+    if (this.rectTouches(rect, "sludge")) return "sludge";
+    if (this.rectTouches(rect, "spikes")) return "spikes";
+    return null;
+  }
+
+  /**
+   * Arcade collision filter shared by every body: solid tiles always collide;
+   * one-way tiles (grates, ladder tops) only when the body falls onto them from
+   * above and isn't deliberately dropping through.
+   */
+  allowsTileCollision(
+    body: Phaser.Physics.Arcade.Body,
+    tile: Phaser.Tilemaps.Tile,
+    droppingThrough = false,
+  ): boolean {
+    if (!this.isOneWayTile(tile)) return true;
+    if (droppingThrough) return false;
+    return body.velocity.y >= 0 && body.prev.y + body.height <= tile.pixelY + 4;
   }
 
   ladderCenterNear(x: number, y: number): number | undefined {

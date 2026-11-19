@@ -29,6 +29,8 @@ async function run() {
     await shot("02-title-menu");
     await page.keyboard.press("KeyZ");
     await page.waitForFunction(() => window.gunkDebug !== undefined, null, { timeout: 10000 });
+    // Enemies have their own suite (enemies.mjs); keep this one deterministic.
+    await page.evaluate(() => window.gunkDebug.clearEnemies());
     await wait(900);
     await shot("03-stage-intro");
     await wait(1500);

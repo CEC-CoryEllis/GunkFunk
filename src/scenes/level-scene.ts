@@ -21,8 +21,13 @@ import { InputSource } from "../core/input/input-source";
 import { CameraDirector } from "../gameplay/camera/camera-director";
 import { BULGO } from "../gameplay/characters/bulgo";
 import { CombatWorld } from "../gameplay/combat/combat-world";
+import { Enemy } from "../gameplay/enemies/enemy";
+import type { EnemyContext, EnemyHandle } from "../gameplay/enemies/enemy-context";
+import { createEnemy } from "../gameplay/enemies/enemy-factory";
 import { Effects } from "../gameplay/fx/effects";
 import { Player } from "../gameplay/player/player";
+import { KillCombo } from "../gameplay/scoring/kill-combo";
+import { MusicDirector } from "../gameplay/stage/music-director";
 import { spawnStageEntities } from "../gameplay/stage/spawn-entities";
 import type { StageContext, StageEntity } from "../gameplay/stage/stage-context";
 import { ProjectileSystem } from "../gameplay/weapons/projectile-system";
@@ -43,6 +48,12 @@ export class LevelScene extends Phaser.Scene {
   combat!: CombatWorld;
   projectiles!: ProjectileSystem;
   entities: StageEntity[] = [];
+  /** Entities created mid-update (split blobs); merged in after the update loop. */
+  private pendingEntities: StageEntity[] = [];
+  enemyContext!: EnemyContext;
+  readonly killCombo = new KillCombo();
+  private music = new MusicDirector(1);
+  private musicCheck = 0;
   private fx!: Effects;
   private cameraDirector!: CameraDirector;
   private parallax!: ParallaxBackground;
@@ -87,9 +98,24 @@ export class LevelScene extends Phaser.Scene {
       },
       this.checkpoint,
     );
-    this.entities = spawnStageEntities(ctx, this.level.parsed, this.player);
+    const enemyContext: EnemyContext = {
+      ...ctx,
+      player: this.player,
+      spawnEnemy: (kind, x, y, options) => {
+        this.pendingEntities.push(createEnemy(kind, enemyContext, x, y, options));
+      },
+      enemyDefeated: (enemy, points) => this.scoreKnockout(enemy, points),
+    };
+    this.enemyContext = enemyContext;
+    this.entities = spawnStageEntities(enemyContext, this.level.parsed, this.player);
+    this.pendingEntities = [];
+    this.music = new MusicDirector(1);
     this.physics.add.collider(this.player.sprite, this.level.layer, undefined, (_p, tile) =>
-      this.allowTileCollision(tile as Phaser.Tilemaps.Tile),
+      this.level.allowsTileCollision(
+        this.player.sprite.body as Phaser.Physics.Arcade.Body,
+        tile as Phaser.Tilemaps.Tile,
+        this.player.movement.droppingThrough,
+      ),
     );
 
     this.cameraDirector = new CameraDirector(
@@ -145,14 +171,6 @@ export class LevelScene extends Phaser.Scene {
     } else showPickupBanner(this, def.name, "AMMO REFILL!");
   }
 
-  /** One-way tiles only collide when falling onto them from above and not dropping through. */
-  private allowTileCollision(tile: Phaser.Tilemaps.Tile): boolean {
-    if (!this.level.isOneWayTile(tile)) return true;
-    const body = this.player.sprite.body as Phaser.Physics.Arcade.Body;
-    if (this.player.movement.droppingThrough) return false;
-    return body.velocity.y >= 0 && body.prev.y + body.height <= tile.pixelY + 4;
-  }
-
   private fixedUpdate(delta: number): void {
     if (this.fx.frozen) return;
     const input = this.inputSource.poll();
@@ -163,7 +181,40 @@ export class LevelScene extends Phaser.Scene {
     this.player.fixedUpdate(input, delta);
     this.projectiles.update(delta);
     this.entities = this.entities.filter((entity) => entity.fixedUpdate(delta));
+    if (this.pendingEntities.length > 0) {
+      this.entities.push(...this.pendingEntities);
+      this.pendingEntities = [];
+    }
     this.combat.tick(delta);
+    this.updateMusic(delta);
+  }
+
+  /** Knockout points, multiplied by the kill combo. */
+  private scoreKnockout(enemy: EnemyHandle, points: number): void {
+    const multiplier = this.killCombo.registerKill(this.time.now / 1000);
+    const total = points * multiplier;
+    GameSession.get(this.game).addScore(total);
+    this.fx.score(total, enemy.x, enemy.y - 36);
+    if (multiplier >= 2) {
+      this.fx.word(`COMBO x${multiplier}!`, enemy.x, enemy.y - 52, "gold");
+      audio.sfx.play("coin", { pitch: 1 + multiplier * 0.15 });
+    }
+  }
+
+  /** The full band joins in while a fight is going on around the player. */
+  private updateMusic(dt: number): void {
+    this.musicCheck -= dt;
+    if (this.musicCheck > 0) return;
+    this.musicCheck = 0.5;
+    const nearby = this.entities.filter(
+      (e) =>
+        e instanceof Enemy &&
+        !e.gone &&
+        Math.abs(e.x - this.player.x) < 220 &&
+        Math.abs(e.y - this.player.y) < 120,
+    ).length;
+    const intensity = this.music.update(0.5, nearby);
+    if (intensity !== null) audio.music.setIntensity(intensity);
   }
 
   override update(_time: number, delta: number): void {
