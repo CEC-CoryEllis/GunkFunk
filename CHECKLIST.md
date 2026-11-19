@@ -70,8 +70,18 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 
 ## M5 — Enemies
 
-- [ ] Sewer Rat, Toilet Chomper, Sludge Blob (splits), Turnip Grenadier (lobs), Disco Roach (swoops)
-- [~] Enemy bowling: the launched-object hit kind exists and works for dummy heads; real enemies still to come
+- [x] Enemy framework (`src/gameplay/enemies/enemy.ts`): physics, hurtboxes with headroom, flash, stun, slime slow-down, knockback scaled by weight, contact damage, hazard deaths, knockout "pop" with comic word
+- [x] Tumbling: knockouts and heavy hits launch enemies, which bowl over other enemies (chain reactions)
+- [x] Sewer Rat: patrols, spots you, rears up, charges — and trips 25% of the time
+- [x] Toilet Chomper: hops and bites; closed lid blocks frontal socks and jabs ("CLANK!"); open lid, attacks from behind, explosions, launched enemies and the mega punch get through
+- [x] Sludge Blob: hops; a hit splits a big blob into two small ones; immune to sludge; Snot Blaster heals it ("YUM!")
+- [x] Turnip Grenadier: lobs stink bombs on true ballistic arcs (unit-tested solver), panics and hops away up close
+- [x] Disco Roach: hovers in a figure-of-eight, strikes a disco pose, dive-bombs, climbs back; only dangerous mid-swoop
+- [x] Kill combo: knockouts within 2.5 s multiply points up to ×5 with a "COMBO ×N" popup (unit tested)
+- [x] Dynamic music: the full band joins when two or more enemies are near Bulgo, backs off 4 s after (unit tested)
+- [x] Crouch-shooting (Down + shoot) so short enemies can be hit; lower jab hitbox
+- [x] Level markers `R` `T` `B` `G` `F`; enemies placed across the test stage; Training Arena sandbox (`?debug&stage=arena`)
+- [x] e2e enemy test (`tests/e2e/enemies.mjs`): one scenario per enemy, bowling, combo, hazards
 
 ## M6 — Interactive world
 
@@ -111,4 +121,5 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 ## Known issues / temporary assets
 
 - None of the art is temporary — all sprites, tiles, backgrounds and the font are final-pipeline generated art, though they will keep being refined.
-- `player.ts` (~410 lines) is orchestration only; hazard handling moves to a shared module in M5, when enemies need it too.
+- `player.ts` (~410 lines) is orchestration only. Hazard detection now lives in `LevelWorld.hazardAt`, shared with enemies; the player keeps only its bounce-and-quip reaction.
+- Enemy AI has only been tuned against scripted tests and screenshots — it needs a hands-on difficulty pass (M11).
