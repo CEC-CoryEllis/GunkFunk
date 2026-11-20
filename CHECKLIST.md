@@ -27,6 +27,7 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 - [x] Gameplay on the fixed 60 Hz physics step (refresh-rate independent)
 - [x] Movement: accel/decel, skid turns, variable jump, apex hang, fast-fall, coyote time, jump buffer, double jump, wall slide/jump, crouch, slide, ladders, drop-through (unit + e2e tested)
 - [x] Engine test stage "Pipe Dream Proving Grounds"
+- [x] Level-design lint: every stage is checked for ledges with too little headroom to jump onto (unit test); the wall-jump shaft climb is covered by the smoke test
 - [x] `?debug` overlay + `window.gunkDebug` test hooks
 
 ## M2 — Bulgo, fully animated

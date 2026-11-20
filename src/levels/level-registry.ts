@@ -7,6 +7,11 @@ const LEVELS: readonly LevelDefinition[] = [SEWER_TEST_LEVEL, TRAINING_ARENA];
 
 export const FIRST_LEVEL_ID = SEWER_TEST_LEVEL.id;
 
+/** Every registered stage (level-design lint tests iterate these). */
+export function allLevels(): readonly LevelDefinition[] {
+  return LEVELS;
+}
+
 export function getLevel(id: string): LevelDefinition {
   const level = LEVELS.find((l) => l.id === id);
   if (!level) throw new Error(`Unknown level "${id}"`);
