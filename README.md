@@ -8,7 +8,9 @@ city sewers. **Bulgo** — a lumpy green mutant with a gorilla torso, stubby leg
 and boundless dim enthusiasm — crawls out of the muck to stop him. Mostly by accident.
 
 > **Status:** early development. The engine, Bulgo (fully animated), combat with three
-> upgradeable weapons, five enemy types and a test stage to fight them in are playable. See [`CHECKLIST.md`](CHECKLIST.md) for exactly what works and what's
+> upgradeable weapons, five enemy types, an interactive world (exploding barrels, launch
+> toilets, a toppling vending machine, fans, hydrants, platforms, cracked walls and secrets)
+> and a test stage to try it all in are playable. See [`CHECKLIST.md`](CHECKLIST.md) for exactly what works and what's
 > next, and [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) for the architecture.
 
 ## Requirements
@@ -79,7 +81,8 @@ Individual scripts: `npm run format`, `npm run lint`, `npm run typecheck`, `npm 
 - **Unit tests** (Vitest, `tests/unit/`) cover the pure systems: pixel raster library,
   level parsing, movement physics (jump height, coyote time, jump buffering, wall jumps,
   slides), melee combo timing and quips, the combat world, weapon inventory, trigger
-  timing, projectile flight and bouncing, homing, shot patterns and charge timing.
+  timing, projectile flight and bouncing, homing, shot patterns and charge timing, cell
+  regions and secret areas, moving-platform paths, updraft lift and the prop rules.
 - **Smoke test** (Playwright, `tests/e2e/smoke.mjs`) starts Vite, walks title → menu →
   stage, drives Bulgo through running, jumping, punching, sliding, hazards, wall slides,
   ladders, pause, idle and death/respawn, asserts the outcomes, saves screenshots to
@@ -90,9 +93,13 @@ Individual scripts: `npm run format`, `npm run lint`, `npm run typecheck`, `npm 
 - **Enemy test** (`tests/e2e/enemies.mjs`) runs in the Training Arena and stages one scenario
   per enemy (rat charge, toilet lid armour, blob split and snot healing, turnip stink bombs,
   roach swoop), plus bowling, the kill combo and sludge deaths.
+- **Prop test** (`tests/e2e/props.mjs`) runs in the Training Arena: crates and snacks, trash
+  can surprises, a barrel chain reaction, the toppling vending machine, hydrant spray, fan
+  hover, toilet launch, riding platforms, and breaking the cracked wall into the secret lounge.
 
 Debug builds can open a specific stage with `?debug&stage=<id>` — `arena` is a flat sandbox
-for trying enemies out (`window.gunkDebug.spawnEnemy("rat", x, y)` in the console).
+for trying enemies and props out (`window.gunkDebug.spawnEnemy("rat", x, y)` or
+`window.gunkDebug.spawnProp("barrel", x, 192)` in the console).
 
 - **Audio render test** (`tests/e2e/audio-render.mjs`) renders every track, stinger and
   sound effect offline, checks levels/clipping/silence, and writes WAVs to `audio-export/`.
@@ -126,7 +133,7 @@ src/
   audio/      synth engine, instruments, sequencer + songs, SFX recipes
   config/     resolution and global constants
   core/       input (keyboard + gamepad → actions), session state, events
-  gameplay/   player (movement, combat, health), characters, camera, effects
+  gameplay/   player, characters, combat, weapons, enemies, props, camera, effects
   levels/     ASCII level format, parser, Phaser level builder, parallax, stage data
   scenes/     boot, title, level, HUD, pause, game over, debug overlay
   ui/         pixel text, menus, speech bubbles

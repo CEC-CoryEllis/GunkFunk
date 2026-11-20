@@ -151,7 +151,7 @@ src/
     powerups/             Power-up definitions + timers
     enemies/              Enemy base + one module per enemy type
     bosses/               Boss state machines
-    environment/          Interactive / destructible objects
+    props/                Interactive / destructible objects, items, secrets
     fx/                   Particles, screen shake, hit sparks, popups
     camera/               Camera director (look-ahead, boss framing, co-op ready)
   levels/

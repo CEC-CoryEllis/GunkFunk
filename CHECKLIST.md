@@ -86,8 +86,21 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 
 ## M6 — Interactive world
 
-- [ ] Launch toilets, toxic barrels with chain reactions, vending machine (topples), hydrants, vent fans
-- [ ] Crates, cracked walls hiding secrets, moving platforms
+- [x] Prop framework (`src/gameplay/props/`): `PropContext` (launch / lift / carry / heal the player, spawn items, lift enemies, report gems and secrets), shared `BreakableProp` base on the "neutral" team, and a new "environment" team whose hits (blasts, toppling machines) hurt everyone — chain reactions come from the shared damage pipeline
+- [x] Prop art: items (burger snack, mystery-meat feast, Funk Gem), crate, toxic barrel + fuse flash, trash can (wobble / tipped), hydrant, Snack-O-Matic (+ cracked), launch toilet + geyser flush, vent fan, moving platform; new splinter / water / junk / brick particles; cracked brick tiles
+- [x] Crate: breaks in 3 hits (or one big one), always drops a snack
+- [x] Toxic barrel: fuse (0.7 s, 0.22 s when caught in a blast) then an environment explosion — barrels chain down a row and hurt Bulgo too
+- [x] Trash can: tips over spilling a surprise — snack, Funk Gem or a rat (weighted table, unit tested)
+- [x] Snack-O-Matic: each whack shakes a snack loose; broken, it topples away from the hit and crushes whatever is there (enemies, Bulgo, props), spilling a feast
+- [x] Launch toilet: land on the seat → geyser flush launches ~8.5 tiles and refunds the double jump
+- [x] Hydrant: punch the cap off → 4 s water jet that shoves enemies down the corridor (onto spikes, into sludge)
+- [x] Vent fan: 6-tile updraft for Bulgo and enemies; tapering wind + air drag so you hover near the top instead of yo-yoing (lift and drag unit tested)
+- [x] Moving platforms (`==` between `:` stops, sideways or up/down; path finding unit tested): one-way from above, carries riders both ways
+- [x] Cracked walls (`%`): solid until a heavy hit (combo finisher, Mega Punch, explosion, bowled enemy) — otherwise "TINK!"; the wall's region crumbles and re-autotiles
+- [x] Secret areas (`*`): hidden under a fake-brick cover (neighbours autotile as if solid) that fades when you step in; first visit = stinger + 1000 bonus + banner, lounge music while inside, stage music when you leave
+- [x] Items: snacks heal 1, feasts heal 3 (100 points if already full); dropped food bounces and spoils after 12 s; gems score 500 and count on the HUD
+- [x] Props placed across the test stage (crates, can, barrels, vending machine, toilet shortcut, hydrant by the spikes, platform over the spikes, fan up to the end grate, secret lounge behind the end wall); Training Arena gains a secret room
+- [x] e2e prop test (`tests/e2e/props.mjs`): every prop, chain reactions, crushing, riding, hovering, wall + secret + music
 
 ## M7 — Power-ups & transformations
 
@@ -122,5 +135,7 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 ## Known issues / temporary assets
 
 - None of the art is temporary — all sprites, tiles, backgrounds and the font are final-pipeline generated art, though they will keep being refined.
-- `player.ts` (~410 lines) is orchestration only. Hazard detection now lives in `LevelWorld.hazardAt`, shared with enemies; the player keeps only its bounce-and-quip reaction.
+- `player.ts` (~440 lines) is orchestration only; the death/respawn lifecycle is the next thing to extract if it grows further. Hazard detection now lives in `LevelWorld.hazardAt`, shared with enemies; the player keeps only its bounce-and-quip reaction.
 - Enemy AI has only been tuned against scripted tests and screenshots — it needs a hands-on difficulty pass (M11).
+- Enemies, projectiles and dropped items don't collide with moving platforms (only Bulgo rides them); items also fall through one-way grates. Fine for the test stage; revisit when M8 needs it.
+- Moving platforms are always two tiles wide (`==`).
