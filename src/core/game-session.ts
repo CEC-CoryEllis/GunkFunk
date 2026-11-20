@@ -11,6 +11,9 @@ export const STARTING_LIVES = 3;
 export class GameSession {
   lives = STARTING_LIVES;
   score = 0;
+  /** Funk Gems collected and secret areas found (for the stage results). */
+  gems = 0;
+  secrets = 0;
   characterId = "bulgo";
 
   constructor(private readonly events: Phaser.Events.EventEmitter) {}
@@ -18,6 +21,15 @@ export class GameSession {
   addScore(points: number): void {
     this.score += points;
     this.events.emit(GameEvents.ScoreChanged, this.score);
+  }
+
+  collectGem(): void {
+    this.gems += 1;
+    this.events.emit(GameEvents.GemsChanged, this.gems);
+  }
+
+  foundSecret(): void {
+    this.secrets += 1;
   }
 
   /** Returns false when that was the last life. */

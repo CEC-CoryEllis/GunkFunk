@@ -11,7 +11,12 @@ import type { WeaponId } from "../gameplay/weapons/weapon-ids";
 import { Enemy } from "../gameplay/enemies/enemy";
 import { createEnemy } from "../gameplay/enemies/enemy-factory";
 import type { EnemyKind } from "../gameplay/enemies/enemy-kinds";
+import { MovingPlatform } from "../gameplay/props/moving-platform";
+import { type SingleProp, createProp } from "../gameplay/props/prop-factory";
+import type { TrashSurprise } from "../gameplay/props/prop-rules";
+import { TrashCan } from "../gameplay/props/trash-can";
 import { pixelText } from "../ui/text";
+import { type PropSnapshot, snapshotProps } from "./debug-props";
 import type { LevelScene } from "./level-scene";
 
 declare global {
@@ -53,10 +58,18 @@ export interface GunkTestHooks {
   spawnEnemy(kind: EnemyKind, x: number, y: number): number;
   /** Removes every enemy (keeps older e2e scenarios deterministic). */
   clearEnemies(): void;
-  /** Full health, no invulnerability window (resets between test scenarios). */
-  heal(): void;
+  /** Full (or the given) health, no invulnerability window (resets between test scenarios). */
+  heal(health?: number): void;
   projectiles(): number;
   score(): number;
+  /** Interactive props currently on the stage. */
+  props(): PropSnapshot[];
+  /** Places a prop standing on the floor at world (x, y). */
+  spawnProp(kind: SingleProp, x: number, y: number, surprise?: TrashSurprise): void;
+  /** Adds a moving platform travelling between two tile positions. */
+  spawnPlatform(fromTx: number, fromTy: number, toTx: number, toTy: number): void;
+  session(): { gems: number; secrets: number; lives: number };
+  terrainAt(x: number, y: number): string;
   hold(action: Action): void;
   release(action: Action): void;
   teleport(x: number, y: number): void;
@@ -137,18 +150,36 @@ function installTestHooks(scene: LevelScene): void {
         slimed: e.slimed,
       })),
     spawnEnemy: (kind, x, y) => {
-      const enemy = createEnemy(kind, scene.enemyContext, x, y);
+      const enemy = createEnemy(kind, scene.stageContext, x, y);
       scene.entities.push(enemy);
       return enemy.id;
     },
-    heal: () => {
-      scene.player.health.health = scene.player.health.maxHealth;
+    heal: (health) => {
+      scene.player.health.health = health ?? scene.player.health.maxHealth;
       scene.player.health.invulnerable = 0;
     },
     clearEnemies: () => {
       for (const e of liveEnemies(scene)) e.remove();
     },
     score: () => GameSession.get(scene.game).score,
+    props: () => snapshotProps(scene.entities),
+    spawnProp: (kind, x, y, surprise) => {
+      const ctx = scene.stageContext;
+      scene.entities.push(
+        kind === "trashCan" && surprise
+          ? new TrashCan(ctx, x, y, surprise)
+          : createProp(kind, ctx, x, y),
+      );
+    },
+    spawnPlatform: (fromTx, fromTy, toTx, toTy) => {
+      const path = { from: { tx: fromTx, ty: fromTy }, to: { tx: toTx, ty: toTy } };
+      scene.entities.push(new MovingPlatform(scene.stageContext, path));
+    },
+    session: () => {
+      const { gems, secrets, lives } = GameSession.get(scene.game);
+      return { gems, secrets, lives };
+    },
+    terrainAt: (x, y) => scene.level.terrainAtWorld(x, y),
     hold: (action) => scene.inputSource.setScripted(action, true),
     release: (action) => scene.inputSource.setScripted(action, false),
     audio: () => ({ unlocked: audio.unlocked, track: audio.music.currentTrack }),
@@ -160,5 +191,5 @@ function installTestHooks(scene: LevelScene): void {
 }
 
 function liveEnemies(scene: LevelScene): Enemy[] {
-  return scene.entities.filter((e): e is Enemy => e instanceof Enemy && !e.gone);
+  return scene.liveEnemies();
 }

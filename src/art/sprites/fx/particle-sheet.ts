@@ -15,6 +15,10 @@ export const PARTICLE_FRAMES = {
   slime: "slime",
   spark: "spark",
   stink: "stink",
+  splinter: "splinter",
+  water: "water",
+  junk: "junk",
+  brick: "brick",
 } as const;
 
 const SIZE = 8;
@@ -70,6 +74,46 @@ const MAPS: Readonly<Record<keyof typeof PARTICLE_FRAMES, readonly string[]>> = 
     "..ddd...",
     "........",
   ],
+  splinter: [
+    "........",
+    "......k.",
+    ".....kbk",
+    "....kbk.",
+    "...kbk..",
+    "..kbk...",
+    ".kbk....",
+    "..k.....",
+  ],
+  water: [
+    "........",
+    "...c....",
+    "..cwc...",
+    "..cwc...",
+    ".ccwcc..",
+    ".ccccc..",
+    "..ccc...",
+    "........",
+  ],
+  junk: [
+    "........",
+    ".kkk....",
+    "kyyyk...",
+    "kyyyyk..",
+    ".kyyyyk.",
+    "..kkyyk.",
+    "....kk..",
+    "........",
+  ],
+  brick: [
+    "........",
+    "..kkkk..",
+    ".krrrrk.",
+    ".krRrrk.",
+    ".krrrRk.",
+    "..kkkk..",
+    "........",
+    "........",
+  ],
   spark: [
     "...y....",
     "...y....",
@@ -93,6 +137,10 @@ export function buildParticleSheet(): { canvas: PixelCanvas; frames: [string, nu
     l: RAMPS.sludge[4]!,
     d: RAMPS.sludge[1]!,
     p: RAMPS.hotPink[3]!,
+    b: RAMPS.pipe[2]!,
+    c: RAMPS.cyan[2]!,
+    r: RAMPS.brick[2]!,
+    R: RAMPS.brick[3]!,
   };
   names.forEach((name, i) => drawPixelMap(canvas, i * SIZE, 0, MAPS[name], legend));
   return { canvas, frames: names.map((name, i) => [name, i * SIZE]) };

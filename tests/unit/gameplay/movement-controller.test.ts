@@ -179,6 +179,27 @@ describe("MovementController", () => {
     expect(sim.vx).toBeGreaterThan(DEFAULT_TUNING.runSpeed);
   });
 
+  it("rises off the floor in a strong updraft, capped at a gentle speed", () => {
+    const sim = grounded();
+    for (let i = 0; i < 40; i++) {
+      sim.controller.addLift(1900);
+      sim.step();
+      expect(sim.vy).toBeGreaterThanOrEqual(-300);
+    }
+    expect(sim.controller.state).toBe("air");
+    expect(sim.y).toBeLessThan(-60);
+  });
+
+  it("stays planted when the lift is weaker than gravity", () => {
+    const sim = grounded();
+    for (let i = 0; i < 20; i++) {
+      sim.controller.addLift(DEFAULT_TUNING.gravity * 0.5);
+      sim.step();
+    }
+    expect(sim.controller.state).toBe("ground");
+    expect(sim.y).toBe(0);
+  });
+
   it("crouches in place when slow", () => {
     const sim = grounded();
     sim.run(5, ["down"]);

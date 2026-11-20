@@ -31,8 +31,9 @@ export function parseLevel(level: LevelDefinition): ParsedLevel {
       if (kind !== undefined) {
         line.push(kind);
       } else if (spawn !== undefined) {
-        spawns.push({ ...spawn, tx, ty });
-        line.push("empty");
+        const { terrain: under, ...marker } = spawn;
+        spawns.push({ ...marker, tx, ty });
+        line.push(under ?? "empty");
       } else {
         throw new LevelParseError(
           `Level "${level.id}" has unknown character "${ch}" at ${tx},${ty}`,
@@ -62,13 +63,39 @@ export function terrainAt(level: ParsedLevel, tx: number, ty: number): TerrainKi
 
 /** Autotile neighbour mask: N=1, E=2, S=4, W=8 (bit set = neighbour is solid). */
 export function solidMask(level: ParsedLevel, tx: number, ty: number): number {
-  const solid = (x: number, y: number) => terrainAt(level, x, y) === "solid";
+  return solidMaskWhere((x, y) => terrainAt(level, x, y) === "solid", tx, ty);
+}
+
+/** Autotile mask (N=1, E=2, S=4, W=8) for an arbitrary notion of "solid". */
+export function solidMaskWhere(
+  solid: (tx: number, ty: number) => boolean,
+  tx: number,
+  ty: number,
+): number {
   return (
     (solid(tx, ty - 1) ? 1 : 0) |
     (solid(tx + 1, ty) ? 2 : 0) |
     (solid(tx, ty + 1) ? 4 : 0) |
     (solid(tx - 1, ty) ? 8 : 0)
   );
+}
+
+/**
+ * Cells that make up secret areas: every `*` cell, plus any item placed right
+ * next to one (a gem sitting in a secret room is part of the room).
+ */
+export function secretCells(level: ParsedLevel): { tx: number; ty: number }[] {
+  const secret = level.spawns.filter((s) => s.kind === "secret");
+  const keys = new Set(secret.map((s) => `${s.tx},${s.ty}`));
+  const touchesSecret = (tx: number, ty: number) =>
+    keys.has(`${tx - 1},${ty}`) ||
+    keys.has(`${tx + 1},${ty}`) ||
+    keys.has(`${tx},${ty - 1}`) ||
+    keys.has(`${tx},${ty + 1}`);
+  const items = level.spawns.filter(
+    (s) => (s.prop === "gem" || s.prop === "snack") && touchesSecret(s.tx, s.ty),
+  );
+  return [...secret, ...items].map(({ tx, ty }) => ({ tx, ty }));
 }
 
 /** Groups horizontal runs of a terrain kind (hazard volumes are built per run, not per tile). */

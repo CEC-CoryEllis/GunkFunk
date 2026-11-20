@@ -8,8 +8,10 @@ export const TILE = {
   ladder: 20,
   ladderTop: 21,
   spikes: 22,
+  /** 16 autotile variants of cracked (breakable) brick: crackedBase + neighbour mask. */
+  crackedBase: 23,
 } as const;
 
 export const TILESET_COLUMNS = 8;
-export const TILESET_SIZE = 23;
+export const TILESET_SIZE = 39;
 export const INTERIOR_VARIANTS = 3;

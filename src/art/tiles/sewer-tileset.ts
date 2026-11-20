@@ -162,6 +162,40 @@ function drawInteriorDetail(c: PixelCanvas, ox: number, oy: number, variant: num
   }
 }
 
+/**
+ * A jagged crack across the brick face plus crumbled mortar: noticeable if you
+ * look, easy to miss if you don't. These blocks hide secrets.
+ */
+function drawCracks(c: PixelCanvas, ox: number, oy: number, seed: number): void {
+  const flip = noise(seed, 3, 9) > 0.5;
+  const fx = (x: number) => (flip ? T - 1 - x : x);
+  const segments: readonly [number, number, number, number][] = [
+    [3, 0, 5, 4],
+    [5, 4, 4, 7],
+    [4, 7, 8, 9],
+    [8, 9, 7, 12],
+    [7, 12, 10, 14],
+    [8, 9, 13, 6],
+    [5, 4, 1, 5],
+  ];
+  // A lit edge one pixel beside each crack gives it depth, then the dark split on top.
+  for (const [x0, y0, x1, y1] of segments) {
+    line(c, ox + fx(x0) + 1, oy + y0 + 1, ox + fx(x1) + 1, oy + y1 + 1, RAMPS.brick[4]!);
+  }
+  for (const [x0, y0, x1, y1] of segments) {
+    line(c, ox + fx(x0), oy + y0, ox + fx(x1), oy + y1, OUTLINE);
+  }
+  // Chipped-out holes where chunks of brick have already fallen away.
+  for (const [x, y] of [
+    [11, 2],
+    [1, 11],
+    [12, 12],
+  ] as const) {
+    fillRect(c, ox + fx(x) - (flip ? 1 : 0), oy + y, 2, 2, RAMPS.murk[0]!);
+    c.set(ox + fx(x), oy + y - 1, RAMPS.brick[4]!);
+  }
+}
+
 export function buildSewerTileset(): PixelCanvas {
   const rows = Math.ceil(TILESET_SIZE / TILESET_COLUMNS);
   const c = new PixelCanvas(TILESET_COLUMNS * T, rows * T);
@@ -180,5 +214,10 @@ export function buildSewerTileset(): PixelCanvas {
   drawLadder(c, ...at(TILE.ladder), false);
   drawLadder(c, ...at(TILE.ladderTop), true);
   drawSpikes(c, ...at(TILE.spikes));
+  for (let mask = 0; mask < 16; mask++) {
+    const [x, y] = at(TILE.crackedBase + mask);
+    drawBrick(c, x, y, mask, 1);
+    drawCracks(c, x, y, mask);
+  }
   return c;
 }

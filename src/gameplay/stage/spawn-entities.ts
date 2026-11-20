@@ -3,18 +3,19 @@
  */
 import { TILE_SIZE } from "../../config/display";
 import type { ParsedLevel } from "../../levels/level-format";
-import type { EnemyContext } from "../enemies/enemy-context";
 import { createEnemy, spawnsAirborne } from "../enemies/enemy-factory";
 import { type PickupCollector, WeaponPickup } from "../pickups/weapon-pickup";
+import type { PropContext } from "../props/prop-context";
+import { spawnProps } from "../props/prop-factory";
 import { TrainingDummy } from "../targets/training-dummy";
 import type { StageEntity } from "./stage-context";
 
 export function spawnStageEntities(
-  ctx: EnemyContext,
+  ctx: PropContext,
   level: ParsedLevel,
   collector: PickupCollector,
 ): StageEntity[] {
-  const entities: StageEntity[] = [];
+  const entities: StageEntity[] = spawnProps(ctx, level);
   for (const spawn of level.spawns) {
     const centerX = spawn.tx * TILE_SIZE + TILE_SIZE / 2;
     const floorY = (spawn.ty + 1) * TILE_SIZE;
@@ -34,6 +35,11 @@ export function spawnStageEntities(
           );
         }
         break;
+      // Props, walls, secrets and platform stops are built by spawnProps.
+      case "prop":
+      case "crackedWall":
+      case "secret":
+      case "platformStop":
       case "playerStart":
         break;
     }

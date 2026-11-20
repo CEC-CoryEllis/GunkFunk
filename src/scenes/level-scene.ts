@@ -21,15 +21,17 @@ import { InputSource } from "../core/input/input-source";
 import { CameraDirector } from "../gameplay/camera/camera-director";
 import { BULGO } from "../gameplay/characters/bulgo";
 import { CombatWorld } from "../gameplay/combat/combat-world";
+import { overlaps } from "../gameplay/combat/hit-types";
 import { Enemy } from "../gameplay/enemies/enemy";
-import type { EnemyContext, EnemyHandle } from "../gameplay/enemies/enemy-context";
+import type { EnemyHandle } from "../gameplay/enemies/enemy-context";
 import { createEnemy } from "../gameplay/enemies/enemy-factory";
 import { Effects } from "../gameplay/fx/effects";
 import { Player } from "../gameplay/player/player";
+import type { PropContext } from "../gameplay/props/prop-context";
 import { KillCombo } from "../gameplay/scoring/kill-combo";
-import { MusicDirector } from "../gameplay/stage/music-director";
 import { spawnStageEntities } from "../gameplay/stage/spawn-entities";
 import type { StageContext, StageEntity } from "../gameplay/stage/stage-context";
+import { StageMusic } from "../gameplay/stage/stage-music";
 import { ProjectileSystem } from "../gameplay/weapons/projectile-system";
 import { WEAPONS } from "../gameplay/weapons/weapon-definitions";
 import type { CollectOutcome, OwnedWeapon } from "../gameplay/weapons/weapon-inventory";
@@ -38,6 +40,9 @@ import { getLevel } from "../levels/level-registry";
 import { LevelWorld } from "../levels/level-world";
 import { ParallaxBackground } from "../levels/parallax-background";
 import { showPickupBanner, showStageCard } from "../ui/banners";
+
+const GEM_POINTS = 500;
+const SECRET_POINTS = 1000;
 import { DebugOverlay } from "./debug-overlay";
 import { type LevelSceneData, SceneKeys } from "./scene-keys";
 
@@ -48,11 +53,12 @@ export class LevelScene extends Phaser.Scene {
   combat!: CombatWorld;
   projectiles!: ProjectileSystem;
   entities: StageEntity[] = [];
-  /** Entities created mid-update (split blobs); merged in after the update loop. */
+  /** Entities created mid-update (split blobs, dropped items); merged in after the update loop. */
   private pendingEntities: StageEntity[] = [];
-  enemyContext!: EnemyContext;
+  /** Everything stage entities can reach: enemies and props share one context. */
+  stageContext!: PropContext;
   readonly killCombo = new KillCombo();
-  private music = new MusicDirector(1);
+  private music!: StageMusic;
   private musicCheck = 0;
   private fx!: Effects;
   private cameraDirector!: CameraDirector;
@@ -98,18 +104,40 @@ export class LevelScene extends Phaser.Scene {
       },
       this.checkpoint,
     );
-    const enemyContext: EnemyContext = {
+    this.music = new StageMusic(definition.music);
+    const stage: PropContext = {
       ...ctx,
       player: this.player,
       spawnEnemy: (kind, x, y, options) => {
-        this.pendingEntities.push(createEnemy(kind, enemyContext, x, y, options));
+        this.pendingEntities.push(createEnemy(kind, stage, x, y, options));
       },
       enemyDefeated: (enemy, points) => this.scoreKnockout(enemy, points),
+      spawnEntity: (entity) => this.pendingEntities.push(entity),
+      liftablesIn: (area) => this.liveEnemies().filter((e) => overlaps(area, e.hurtbox())),
+      gemCollected: (x, y) => {
+        session.collectGem();
+        ctx.addScore(GEM_POINTS, x, y - 12);
+      },
+      secretEntered: (_region, firstVisit) => {
+        this.music.enterSecret(firstVisit);
+        if (!firstVisit) return;
+        session.foundSecret();
+        ctx.addScore(SECRET_POINTS, this.player.x, this.player.y - 40);
+        showPickupBanner(this, "SECRET FOUND!", `+${SECRET_POINTS} BONUS`);
+      },
+      secretLeft: () => this.music.leaveSecret(),
+      collidePlayerWith: (object) => {
+        this.physics.add.collider(
+          this.player.sprite,
+          object,
+          undefined,
+          () => !this.player.movement.droppingThrough,
+        );
+      },
     };
-    this.enemyContext = enemyContext;
-    this.entities = spawnStageEntities(enemyContext, this.level.parsed, this.player);
+    this.stageContext = stage;
     this.pendingEntities = [];
-    this.music = new MusicDirector(1);
+    this.entities = spawnStageEntities(stage, this.level.parsed, this.player);
     this.physics.add.collider(this.player.sprite, this.level.layer, undefined, (_p, tile) =>
       this.level.allowsTileCollision(
         this.player.sprite.body as Phaser.Physics.Arcade.Body,
@@ -131,9 +159,7 @@ export class LevelScene extends Phaser.Scene {
     this.publishHealth(this.player.health.health, this.player.health.maxHealth);
     this.publishWeapon(this.player.combat.inventory.current);
     this.scene.launch(SceneKeys.Hud);
-    audio.music.play(definition.music, { fadeInSeconds: 0.5 });
-    // Intensity 1 brings in the lead hook; bosses and big set pieces push it to 2.
-    audio.music.setIntensity(1);
+    this.music.start();
     showStageCard(this, definition.title, definition.subtitle);
     this.time.delayedCall(1800, () => this.player.say("start", true));
     this.cameras.main.fadeIn(300);
@@ -206,15 +232,14 @@ export class LevelScene extends Phaser.Scene {
     this.musicCheck -= dt;
     if (this.musicCheck > 0) return;
     this.musicCheck = 0.5;
-    const nearby = this.entities.filter(
-      (e) =>
-        e instanceof Enemy &&
-        !e.gone &&
-        Math.abs(e.x - this.player.x) < 220 &&
-        Math.abs(e.y - this.player.y) < 120,
+    const nearby = this.liveEnemies().filter(
+      (e) => Math.abs(e.x - this.player.x) < 220 && Math.abs(e.y - this.player.y) < 120,
     ).length;
-    const intensity = this.music.update(0.5, nearby);
-    if (intensity !== null) audio.music.setIntensity(intensity);
+    this.music.update(0.5, nearby);
+  }
+
+  liveEnemies(): Enemy[] {
+    return this.entities.filter((e): e is Enemy => e instanceof Enemy && !e.gone);
   }
 
   override update(_time: number, delta: number): void {

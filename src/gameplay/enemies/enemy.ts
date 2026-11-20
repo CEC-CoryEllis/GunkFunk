@@ -24,6 +24,7 @@ import {
   knockbackFor,
   overlaps,
 } from "../combat/hit-types";
+import type { Liftable } from "../props/prop-context";
 import type { StageEntity } from "../stage/stage-context";
 import type { EnemyContext, EnemyHandle, EnemyStats } from "./enemy-context";
 import type { EnemyKind } from "./enemy-kinds";
@@ -37,6 +38,10 @@ const TUMBLE_MIN_SECONDS = 0.18;
 const TUMBLE_MAX_SECONDS = 1.1;
 const BOWLING_DAMAGE = 2;
 const FALL_FRICTION = 6;
+/** Updrafts can't push an enemy up faster than this. */
+const MAX_LIFT_SPEED = 280;
+/** Fraction of vertical speed bled off per second in an updraft (see MovementController). */
+const LIFT_DRAG = 4;
 /** Hurtboxes reach this far above the physics body: short enemies stay hittable. */
 const HURTBOX_HEADROOM = 6;
 
@@ -47,7 +52,7 @@ export type HitReaction = "normal" | "blocked" | "absorbed";
 
 let enemySerial = 0;
 
-export abstract class Enemy implements Damageable, StageEntity, EnemyHandle {
+export abstract class Enemy implements Damageable, StageEntity, EnemyHandle, Liftable {
   readonly team = "enemy" as const;
   readonly kind: EnemyKind;
   readonly sprite: Phaser.Physics.Arcade.Sprite;
@@ -138,6 +143,15 @@ export abstract class Enemy implements Damageable, StageEntity, EnemyHandle {
     if (hit.impact >= LAUNCH_IMPACT || hit.kind === "explosion") this.tumble(kx, ky);
     else this.stun(kx, Math.min(ky, -60));
     return { applied: true, defeated: false };
+  }
+
+  /** Updrafts carry enemies up helplessly (vent fans). */
+  applyLift(acceleration: number, dt: number): void {
+    if (this.removed) return;
+    // Arcade adds the body's own gravity during its step; only the lift goes here.
+    let vy = this.body.velocity.y - acceleration * dt;
+    vy -= vy * LIFT_DRAG * dt;
+    this.body.setVelocityY(Math.max(vy, -MAX_LIFT_SPEED));
   }
 
   // ── Hooks for subclasses ──────────────────────────────────────────────────

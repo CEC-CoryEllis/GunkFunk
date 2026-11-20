@@ -1,8 +1,10 @@
 /**
  * Heads-up display overlay: portrait, segmented "gut meter" health bar, lives,
- * weapon box and score. Listens to game events; holds no gameplay references.
+ * weapon box, score and Funk Gem count. Listens to game events; holds no gameplay references.
  */
 import * as Phaser from "phaser";
+import { animationKey } from "../art/pixel/sprite-sheet";
+import { ITEM_SHEET_KEY } from "../art/sprites/props/item-sheet";
 import { PORTRAIT_KEYS } from "../art/texture-registry";
 import { GAME_WIDTH } from "../config/display";
 import {
@@ -24,6 +26,7 @@ export class HudScene extends Phaser.Scene {
   private bar!: Phaser.GameObjects.Graphics;
   private lives!: Phaser.GameObjects.BitmapText;
   private score!: Phaser.GameObjects.BitmapText;
+  private gems!: Phaser.GameObjects.BitmapText;
   private health: HealthChangedPayload = { health: 0, maxHealth: 0 };
   private displayedScore = 0;
 
@@ -40,6 +43,8 @@ export class HudScene extends Phaser.Scene {
     pixelText(this, GAME_WIDTH - 4, 3, "SCORE", "pink").setOrigin(1, 0);
     this.score = pixelText(this, GAME_WIDTH - 4, 13, "000000", "gold").setOrigin(1, 0);
     this.displayedScore = session.score;
+    this.add.sprite(GAME_WIDTH - 31, 29, ITEM_SHEET_KEY).play(animationKey(ITEM_SHEET_KEY, "gem"));
+    this.gems = pixelText(this, GAME_WIDTH - 4, 25, `x${session.gems}`, "pink").setOrigin(1, 0);
     const initial = this.registry.get(PLAYER_HEALTH_KEY) as HealthChangedPayload | undefined;
     if (initial) {
       this.health = initial;
@@ -57,13 +62,16 @@ export class HudScene extends Phaser.Scene {
     };
     const onLives = (lives: number) => setPixelText(this.lives, `x${lives}`);
     const onWeapon = (payload: WeaponHudPayload | null) => weaponBox.set(payload);
+    const onGems = (gems: number) => setPixelText(this.gems, `x${gems}`);
     events.on(GameEvents.HealthChanged, onHealth);
     events.on(GameEvents.LivesChanged, onLives);
     events.on(GameEvents.WeaponChanged, onWeapon);
+    events.on(GameEvents.GemsChanged, onGems);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       events.off(GameEvents.HealthChanged, onHealth);
       events.off(GameEvents.LivesChanged, onLives);
       events.off(GameEvents.WeaponChanged, onWeapon);
+      events.off(GameEvents.GemsChanged, onGems);
     });
   }
 

@@ -12,21 +12,41 @@
  *                        B  Sludge Blob     G  Turnip Grenadier
  *                        F  Disco Roach (flying)
  *
- * Spawns stand on the floor of their tile, except pickups, which float in
- * the middle of it.
+ *   Props                                   Secrets
+ *   X crate        O toxic barrel           %  cracked wall (solid until smashed)
+ *   U launch toilet V vending machine       *  secret area (hidden under fake brick
+ *   Y fire hydrant W vent fan                  until entered; music changes inside)
+ *   K trash can    + snack                  $  Funk Gem
+ *   == moving platform (two tiles), shuttling between the : stops in its row
+ *      (sideways) or in its columns (up and down)
+ *
+ * Spawns stand on the floor of their tile, except pickups and items, which
+ * float in the middle of it.
  */
 import type { MusicTrackId } from "../audio/audio-types";
 import { ENEMY_MAP_CHARS, type EnemyKind } from "../gameplay/enemies/enemy-kinds";
+import { PROP_MAP_CHARS, type PropKind } from "../gameplay/props/prop-kinds";
 import type { WeaponId } from "../gameplay/weapons/weapon-ids";
 
 export type TerrainKind = "empty" | "solid" | "oneWay" | "ladder" | "sludge" | "spikes";
 
-export type SpawnKind = "playerStart" | "dummy" | "weaponPickup" | "enemy";
+export type SpawnKind =
+  | "playerStart"
+  | "dummy"
+  | "weaponPickup"
+  | "enemy"
+  | "prop"
+  | "crackedWall"
+  | "secret"
+  | "platformStop";
 
 export interface SpawnSpec {
   kind: SpawnKind;
   weapon?: WeaponId;
   enemy?: EnemyKind;
+  prop?: PropKind;
+  /** Terrain under the marker (default empty) — cracked walls are solid. */
+  terrain?: TerrainKind;
 }
 
 export const TERRAIN_LEGEND: Readonly<Record<string, TerrainKind>> = {
@@ -45,10 +65,19 @@ export const SPAWN_LEGEND: Readonly<Record<string, SpawnSpec>> = {
   s: { kind: "weaponPickup", weapon: "sock" },
   n: { kind: "weaponPickup", weapon: "snot" },
   c: { kind: "weaponPickup", weapon: "chicken" },
+  "%": { kind: "crackedWall", terrain: "solid" },
+  "*": { kind: "secret" },
+  ":": { kind: "platformStop" },
   ...Object.fromEntries(
     Object.entries(ENEMY_MAP_CHARS).map(([ch, enemy]) => [
       ch,
       { kind: "enemy", enemy } satisfies SpawnSpec,
+    ]),
+  ),
+  ...Object.fromEntries(
+    Object.entries(PROP_MAP_CHARS).map(([ch, prop]) => [
+      ch,
+      { kind: "prop", prop } satisfies SpawnSpec,
     ]),
   ),
 };
@@ -69,6 +98,7 @@ export interface Spawn {
   kind: SpawnKind;
   weapon?: WeaponId;
   enemy?: EnemyKind;
+  prop?: PropKind;
   /** Tile coordinates. */
   tx: number;
   ty: number;

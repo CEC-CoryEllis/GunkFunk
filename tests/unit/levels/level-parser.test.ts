@@ -5,6 +5,7 @@ import {
   LevelParseError,
   horizontalRuns,
   parseLevel,
+  secretCells,
   solidMask,
   terrainAt,
 } from "../../../src/levels/level-parser";
@@ -35,6 +36,27 @@ describe("parseLevel", () => {
     expect(() => parseLevel(level(["P?"]))).toThrow(LevelParseError);
     expect(() => parseLevel(level(["..."]))).toThrow(/player start/);
     expect(() => parseLevel(level(["PP"]))).toThrow(/found 2/);
+  });
+
+  it("puts prop and region markers on the right terrain", () => {
+    const parsed = parseLevel(level(["P*%X", "==:$", "####"]));
+    const at = (tx: number, ty: number) => parsed.spawns.find((s) => s.tx === tx && s.ty === ty);
+    expect(at(1, 0)?.kind).toBe("secret");
+    expect(terrainAt(parsed, 1, 0)).toBe("empty");
+    // Cracked walls are solid until they're smashed.
+    expect(at(2, 0)?.kind).toBe("crackedWall");
+    expect(terrainAt(parsed, 2, 0)).toBe("solid");
+    expect(at(3, 0)).toMatchObject({ kind: "prop", prop: "crate" });
+    expect(at(0, 1)).toMatchObject({ kind: "prop", prop: "platform" });
+    expect(at(2, 1)?.kind).toBe("platformStop");
+    expect(at(3, 1)).toMatchObject({ kind: "prop", prop: "gem" });
+    expect(at(2, 0)).not.toHaveProperty("terrain");
+  });
+
+  it("counts items inside a secret room as part of it, but not items outside", () => {
+    const parsed = parseLevel(level(["P$.**", "..*$*", "#####"]));
+    const cells = secretCells(parsed).map((c) => `${c.tx},${c.ty}`);
+    expect(new Set(cells)).toEqual(new Set(["2,1", "3,0", "3,1", "4,0", "4,1"]));
   });
 
   it("computes autotile masks", () => {

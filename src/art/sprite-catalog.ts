@@ -12,6 +12,9 @@ import { roachSheetSpec } from "./sprites/enemies/roach-sheet";
 import { toiletSheetSpec } from "./sprites/enemies/toilet-sheet";
 import { turnipSheetSpec } from "./sprites/enemies/turnip-sheet";
 import { fxSheetSpecs } from "./sprites/fx/fx-sheets";
+import { itemSheetSpec } from "./sprites/props/item-sheet";
+import { largePropSheetSpec } from "./sprites/props/large-props-sheet";
+import { smallPropSheetSpec } from "./sprites/props/small-props-sheet";
 import { sludgeSheetSpec } from "./sprites/hazards/sludge";
 import { heldWeaponSheetSpec } from "./sprites/weapons/held-weapons";
 import { pickupSheetSpec, weaponIconSheetSpec } from "./sprites/weapons/pickup-sheet";
@@ -32,5 +35,8 @@ export function spriteCatalog(): SheetSpec[] {
     blobSheetSpec(),
     turnipSheetSpec(),
     roachSheetSpec(),
+    itemSheetSpec(),
+    smallPropSheetSpec(),
+    largePropSheetSpec(),
   ];
 }
