@@ -10,9 +10,9 @@ and boundless dim enthusiasm — crawls out of the muck to stop him. Mostly by a
 > **Status:** early development. The engine, Bulgo (fully animated), combat with three
 > upgradeable weapons, five enemy types, an interactive world (exploding barrels, launch
 > toilets, a toppling vending machine, fans, hydrants, platforms, cracked walls and secrets),
-> three power-ups including the Wrecking Ball transformation, and **Stage 1-1 "Flush Hour"**
-> — a full stage with an alternate route, secrets, checkpoints and the mini-boss THE CLOG —
-> are playable. See [`CHECKLIST.md`](CHECKLIST.md) for exactly what works and what's
+> three power-ups including the Wrecking Ball transformation, and **all of World 1**: Stage 1-1
+> "Flush Hour" (alternate route, secrets, checkpoints, the mini-boss THE CLOG) and the boss
+> stage, Professor Stinkbottom in the three-phase, arena-wrecking **Flush-o-Tron 3000**. See [`CHECKLIST.md`](CHECKLIST.md) for exactly what works and what's
 > next, and [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) for the architecture.
 
 ## Requirements
@@ -88,7 +88,7 @@ Individual scripts: `npm run format`, `npm run lint`, `npm run typecheck`, `npm 
   timing, projectile flight and bouncing, homing, shot patterns and charge timing, cell
   regions and secret areas, moving-platform paths, updraft lift, the prop rules, Wrecking
   Ball physics, power-up timers and effects, The Clog's fight rhythm, boss arenas, the
-  stage-clear tally and Flush Hour's structure.
+  stage-clear tally, Flush Hour's structure and the Flush-o-Tron's three-phase fight.
 - **Smoke test** (Playwright, `tests/e2e/smoke.mjs`) starts Vite, walks title → menu →
   stage, drives Bulgo through running, jumping, punching, sliding, hazards, wall slides,
   ladders, pause, idle and death/respawn, asserts the outcomes, saves screenshots to
@@ -107,10 +107,13 @@ Individual scripts: `npm run format`, `npm run lint`, `npm run typecheck`, `npm 
   and popping; Hyper Grease speed, trail and slipping enemies; Infinite Socks free rapid fire.
 - **Stage test** (`tests/e2e/stage.mjs`) plays Flush Hour: checkpoints and respawning, the
   toilet route to the catwalks, the whole fight with The Clog (arena lock, hair armour, stun
-  window, reset on death, defeat) and the exit, tally and return to the title.
+  window, reset on death, defeat) and the exit, tally and continuing into the boss stage.
+- **Boss test** (`tests/e2e/boss.mjs`) fights the Flush-o-Tron 3000: intro, armour and exposed
+  windows, all three phases with the arena being wrecked between them, the reset (and
+  repair) after losing a life, and the defeat that completes World 1.
 
 Debug builds can open a specific stage with `?debug&stage=<id>` — `flush-hour` (the default),
-`sewer-test` (the engine test stage) or `arena`, a flat sandbox
+`throne-room` (the World 1 boss), `sewer-test` (the engine test stage) or `arena`, a flat sandbox
 for trying enemies and props out (`window.gunkDebug.spawnEnemy("rat", x, y)` or
 `window.gunkDebug.spawnProp("barrel", x, 192)` or `window.gunkDebug.grantPowerUp("wreckingBall")`
 in the console).

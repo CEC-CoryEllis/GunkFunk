@@ -135,7 +135,14 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 
 ## M9 — Boss
 
-- [ ] Professor Stinkbottom / Flush-o-Tron 3000: intro, 3 phases, arena destruction, defeat
+- [x] Boss stage "The Throne Room" (`src/levels/data/throne-room.ts`): an armoury approach (Chicken Launcher, Snot Blaster, a snack, a gem, a checkpoint) and a 24-tile throne room with fragile grates (`_`), two surviving perches and a floor that caves in (`;`)
+- [x] Stages chain: Flush Hour's clear continues to the Throne Room (`next` in the level definition) and Bulgo keeps his weapons; the last stage shows "WORLD 1 COMPLETE!" and "TO BE CONTINUED..." before the title. Boss stages' tallies leave out gems/secrets they don't have
+- [x] Art: the Flush-o-Tron 3000 as a rig of parts — porcelain hull with a Funk Juice core (normal / venting / cracked / wrecked), piston legs (walk, crouch, kneel), rocket jets, a coil spring, the plunger arm and the tank lid — plus Professor Stinkbottom (bust in four moods, ejected) and new projectiles (flush bombs, homing plunger missiles, chemical flasks) and a stomp shockwave
+- [x] Pure `FlushOTronBrain` (data-driven action timelines, unit tested): intro (taunts, name card, untouchable) → phase 1 on legs (walk, stomp shockwaves, plunger slam, flush-bomb lobs, then kneels to vent) → breakdown (legs blown off, grates smashed) → phase 2 on rocket jets (hover, bomb run, dive, then overheats down to the floor) → breakdown (crash, floor caves into sludge, lid blown off) → phase 3 hopping on a spring (flasks, homing plungers)
+- [x] Armour dulls every hit by 1 except while venting / overheating; phase 3 has none; a phase can't be skipped with one big hit (health clamps at each phase floor)
+- [x] Defeat: explosions, Stinkbottom ejected ("CURSE YOU, BULGO! THIS ISN'T OVER!"), the wreck sinks, +20000, World 1 complete
+- [x] Losing a life mid-fight resets the boss to phase 1 and repairs the arena (grates and floor restored)
+- [x] e2e boss test (`tests/e2e/boss.mjs`); Flush Hour's suite now continues into the boss stage
 
 ## M10 — Presentation
 
@@ -161,5 +168,6 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 - Enemies, projectiles and dropped items don't collide with moving platforms (only Bulgo rides them); items also fall through one-way grates. Fine for the test stage; revisit when M8 needs it.
 - Moving platforms are always two tiles wide (`==`).
 - The Wrecking Ball can't climb ladders or wall-jump; if it rolls somewhere only Bulgo can leave, you wait out the timer.
-- Clearing Flush Hour returns to the title for now; the boss stage (M9) and the results/high-score flow (M10) come next.
-- Flush Hour's difficulty, the 5:00 par time and The Clog's tuning have only been checked by scripted tests — they need a hands-on pass (M11).
+- After World 1 the game returns to the title; worlds 2–5 are later content. High scores and save data come with M10.
+- Flush Hour's difficulty, the 5:00 par time and both bosses' tuning have only been checked by scripted tests — they need a hands-on pass (M11).
+- The Flush-o-Tron's body is kinematic (it doesn't collide with tiles); its arena is flat, so that's invisible, but a boss in a hillier arena would need real physics.
