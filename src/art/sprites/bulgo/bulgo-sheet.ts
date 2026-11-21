@@ -2,10 +2,10 @@
  * Assembles Bulgo's sprite sheet spec from his animation pose lists.
  */
 import { PixelCanvas } from "../../pixel/pixel-canvas";
-import type { AnimationSpec, SheetSpec } from "../../pixel/sprite-sheet";
+import type { AnimationSpec, FrameAnchors, SheetSpec } from "../../pixel/sprite-sheet";
 import { BULGO_ANIMATIONS } from "./animations";
-import { pose } from "./bulgo-pose";
-import { BULGO_FRAME, drawBulgo } from "./bulgo-rig";
+import { type BulgoPose, pose } from "./bulgo-pose";
+import { BULGO_FRAME, bulgoHandPosition, drawBulgo } from "./bulgo-rig";
 
 export const BULGO_SHEET_KEY = "bulgo";
 
@@ -16,6 +16,7 @@ export function bulgoSheetSpec(): SheetSpec {
     repeat: anim.repeat,
     holds: anim.holds,
     frames: anim.poses.map((p) => (canvas) => drawBulgo(canvas, p)),
+    anchors: anim.poses.map(handAnchor),
   }));
   return {
     key: BULGO_SHEET_KEY,
@@ -25,6 +26,13 @@ export function bulgoSheetSpec(): SheetSpec {
     originY: BULGO_FRAME.originY,
     animations,
   };
+}
+
+/** Where the front fist is in this frame (none for spun or melted poses). */
+function handAnchor(p: BulgoPose): FrameAnchors | undefined {
+  if (p.puddle || p.spin) return undefined;
+  const hand = bulgoHandPosition(p);
+  return { hand: { x: hand.x - BULGO_FRAME.originX, y: hand.y - BULGO_FRAME.originY } };
 }
 
 /** HUD / menu portrait: Bulgo's head cropped from a grinning pose. */

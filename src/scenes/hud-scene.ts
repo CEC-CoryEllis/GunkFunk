@@ -1,12 +1,19 @@
 /**
- * Heads-up display overlay: portrait, segmented "gut meter" health bar, lives
- * and score. Listens to game events; holds no gameplay references.
+ * Heads-up display overlay: portrait, segmented "gut meter" health bar, lives,
+ * weapon box and score. Listens to game events; holds no gameplay references.
  */
 import * as Phaser from "phaser";
 import { PORTRAIT_KEYS } from "../art/texture-registry";
 import { GAME_WIDTH } from "../config/display";
-import { GameEvents, type HealthChangedPayload, PLAYER_HEALTH_KEY } from "../core/game-events";
+import {
+  GameEvents,
+  type HealthChangedPayload,
+  PLAYER_HEALTH_KEY,
+  PLAYER_WEAPON_KEY,
+  type WeaponHudPayload,
+} from "../core/game-events";
 import { GameSession } from "../core/game-session";
+import { HudWeaponBox } from "../ui/hud-weapon-box";
 import { pixelText, setPixelText } from "../ui/text";
 import { SceneKeys } from "./scene-keys";
 
@@ -38,6 +45,8 @@ export class HudScene extends Phaser.Scene {
       this.health = initial;
       this.drawHealth();
     }
+    const weaponBox = new HudWeaponBox(this, 104, 4);
+    weaponBox.set((this.registry.get(PLAYER_WEAPON_KEY) as WeaponHudPayload | null) ?? null);
 
     const events = this.game.events;
     const onHealth = (payload: HealthChangedPayload) => {
@@ -47,11 +56,14 @@ export class HudScene extends Phaser.Scene {
       if (lost) this.cameras.main.shake(120, 0.004);
     };
     const onLives = (lives: number) => setPixelText(this.lives, `x${lives}`);
+    const onWeapon = (payload: WeaponHudPayload | null) => weaponBox.set(payload);
     events.on(GameEvents.HealthChanged, onHealth);
     events.on(GameEvents.LivesChanged, onLives);
+    events.on(GameEvents.WeaponChanged, onWeapon);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       events.off(GameEvents.HealthChanged, onHealth);
       events.off(GameEvents.LivesChanged, onLives);
+      events.off(GameEvents.WeaponChanged, onWeapon);
     });
   }
 

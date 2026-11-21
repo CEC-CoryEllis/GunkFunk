@@ -4,17 +4,26 @@
  *
  *   Terrain              Spawns
  *   #  solid wall        P  player start
- *   -  one-way platform
- *   H  ladder / chain
- *   ~  toxic sludge (hazard)
- *   ^  rusty spikes (hazard)
+ *   -  one-way platform  D  training dummy
+ *   H  ladder / chain    s  Sock Cannon pickup
+ *   ~  toxic sludge      n  Snot Blaster pickup
+ *   ^  rusty spikes      c  Chicken Launcher pickup
  *   .  empty (space also works)
+ *
+ * Spawns stand on the floor of their tile, except pickups, which float in
+ * the middle of it.
  */
 import type { MusicTrackId } from "../audio/audio-types";
+import type { WeaponId } from "../gameplay/weapons/weapon-ids";
 
 export type TerrainKind = "empty" | "solid" | "oneWay" | "ladder" | "sludge" | "spikes";
 
-export type SpawnKind = "playerStart";
+export type SpawnKind = "playerStart" | "dummy" | "weaponPickup";
+
+export interface SpawnSpec {
+  kind: SpawnKind;
+  weapon?: WeaponId;
+}
 
 export const TERRAIN_LEGEND: Readonly<Record<string, TerrainKind>> = {
   ".": "empty",
@@ -26,8 +35,12 @@ export const TERRAIN_LEGEND: Readonly<Record<string, TerrainKind>> = {
   "^": "spikes",
 };
 
-export const SPAWN_LEGEND: Readonly<Record<string, SpawnKind>> = {
-  P: "playerStart",
+export const SPAWN_LEGEND: Readonly<Record<string, SpawnSpec>> = {
+  P: { kind: "playerStart" },
+  D: { kind: "dummy" },
+  s: { kind: "weaponPickup", weapon: "sock" },
+  n: { kind: "weaponPickup", weapon: "snot" },
+  c: { kind: "weaponPickup", weapon: "chicken" },
 };
 
 export type LevelTheme = "sewer";
@@ -44,6 +57,7 @@ export interface LevelDefinition {
 
 export interface Spawn {
   kind: SpawnKind;
+  weapon?: WeaponId;
   /** Tile coordinates. */
   tx: number;
   ty: number;

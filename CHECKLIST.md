@@ -37,8 +37,8 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 - [x] Health (6-segment gut meter), invulnerability flicker, knockback, hazard bounce
 - [x] Lives, death → melt → respawn at checkpoint, game over screen
 - [x] Speech-bubble quips with gibberish voice, cooldowns and no immediate repeats
-- [~] Punch combo animates and produces timed hitboxes (visible with `?debug`); nothing to hit until enemies/objects exist (M4–M6)
-- [~] `shoot`, `charge`, `talk`, `inflate`, `victory` animations exist but are wired up in M4/M7/M8
+- [x] Punch combo lands hits through the shared damage pipeline (M4)
+- [~] `talk`, `inflate`, `victory` animations exist but are wired up in M7/M8 (`shoot` and `charge` are live as of M4)
 
 ## M3 — Audio foundation
 
@@ -55,14 +55,23 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 
 ## M4 — Combat & weapons
 
-- [ ] Shared damage pipeline (`Damageable`, `HitInfo`), hit-stop, knockback reactions
-- [ ] Sock Cannon, Snot Blaster, Chicken Launcher (3 upgrade levels each), switching, pooling
-- [ ] Charged punch
+- [x] Shared damage pipeline: `HitInfo` / `Damageable` / `CombatWorld` (team filtering, once-per-swing keys, radial explosion knockback, proximity checks, homing queries) — unit tested
+- [x] Hit presentation: real hit-stop (freezes physics and animation), shake scaled by impact, sparks, comic sound words ("POW!", "BAWK!"), score popups
+- [x] Sock Cannon: straight socks with heavy knockback → L2 double barrel → L3 triple-barrel spread (+1 damage)
+- [x] Snot Blaster: bouncing globs that slime targets → L2 mega-globs (+1 damage) → L3 globs split in two on their first bounce
+- [x] Chicken Launcher: arcing rubber chickens with a proximity fuse that explode into feathers → L2 two chickens → L3 three homing chickens
+- [x] Inventory: collect / upgrade / ammo cap / cycle (unit tested); trigger auto-repeat and empty click (unit tested); pooled projectiles with pure, unit-tested flight and bounce physics
+- [x] Weapon pickups (floating soap bubbles), level spawn markers `s` / `n` / `c`, pickup banner, upgrade quips and stinger
+- [x] Held weapon sprite pinned to Bulgo's fist through every shooting frame (per-frame hand anchors); run-and-gun and air-shooting animations
+- [x] HUD weapon box: icon, level pips, ammo, name flash
+- [x] Charged mega punch: hold punch to wind up, flash when ready, release for a 4-damage stretchy haymaker
+- [x] Training dummy ("Crash-Test Rat"): wobble and slime reactions, head pops off on KO and bowls over the next dummy, respawns — level marker `D`
+- [x] e2e combat test (`tests/e2e/combat.mjs`): pickups, upgrades, all three weapons, switching, charge punch, bowling
 
 ## M5 — Enemies
 
 - [ ] Sewer Rat, Toilet Chomper, Sludge Blob (splits), Turnip Grenadier (lobs), Disco Roach (swoops)
-- [ ] Enemy bowling (launched enemies damage others)
+- [~] Enemy bowling: the launched-object hit kind exists and works for dummy heads; real enemies still to come
 
 ## M6 — Interactive world
 
@@ -102,3 +111,4 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 ## Known issues / temporary assets
 
 - None of the art is temporary — all sprites, tiles, backgrounds and the font are final-pipeline generated art, though they will keep being refined.
+- `player.ts` (~410 lines) is orchestration only; hazard handling moves to a shared module in M5, when enemies need it too.

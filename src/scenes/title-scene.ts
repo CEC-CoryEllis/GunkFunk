@@ -115,13 +115,13 @@ export class TitleScene extends Phaser.Scene {
 
   private showControls(): void {
     this.menu?.setEnabled(false);
-    const lines = CONTROL_HINTS.map(([action, keys]) => `${action.padEnd(14, " ")}${keys}`);
+    const lines = CONTROL_HINTS.map(([action, keys]) => `${action.padEnd(15, " ")}${keys}`);
     const bg = this.add
-      .rectangle(0, 0, 260, 22 + lines.length * 12, 0x120822, 0.95)
+      .rectangle(0, 0, 316, 22 + lines.length * 12, 0x120822, 0.95)
       .setOrigin(0.5, 0)
       .setStrokeStyle(1, 0x7a52c8);
     const title = pixelText(this, 0, 6, "CONTROLS", "gold").setOrigin(0.5, 0);
-    const texts = lines.map((line, i) => pixelText(this, -118, 20 + i * 12, line));
+    const texts = lines.map((line, i) => pixelText(this, -150, 20 + i * 12, line));
     this.controlsPanel = this.add
       .container(GAME_WIDTH / 2, 50, [bg, title, ...texts])
       .setDepth(600);

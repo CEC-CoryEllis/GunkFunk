@@ -31,7 +31,7 @@ export function parseLevel(level: LevelDefinition): ParsedLevel {
       if (kind !== undefined) {
         line.push(kind);
       } else if (spawn !== undefined) {
-        spawns.push({ kind: spawn, tx, ty });
+        spawns.push({ ...spawn, tx, ty });
         line.push("empty");
       } else {
         throw new LevelParseError(

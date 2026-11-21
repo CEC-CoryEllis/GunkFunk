@@ -20,7 +20,10 @@ export interface AnimatorInput {
   vy: number;
   onFloor: boolean;
   climbingMoving: boolean;
-  attackAnim: string | null;
+  /** Melee / charge animation that overrides movement, or null. */
+  combatAnim: string | null;
+  /** Holding a gun out: pick the standing, running or airborne shooting pose. */
+  shooting: boolean;
   life: LifeState;
 }
 
@@ -68,7 +71,11 @@ export class PlayerAnimator {
     if (input.life === "respawning") return "respawn";
     if (input.life === "celebrating") return "victory";
     if (input.life === "hurt") return "hurt";
-    if (input.attackAnim) return input.attackAnim;
+    if (input.combatAnim) return input.combatAnim;
+    if (input.shooting && (m.state === "ground" || m.state === "air")) {
+      if (m.state === "air") return "air_shoot";
+      return Math.abs(input.vx) > 30 ? "run_shoot" : "shoot";
+    }
     switch (m.state) {
       case "climb":
         return "climb";
