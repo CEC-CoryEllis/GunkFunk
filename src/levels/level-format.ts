@@ -8,7 +8,8 @@
  *   H  ladder / chain    s  Sock Cannon pickup
  *   ~  toxic sludge      n  Snot Blaster pickup
  *   ^  rusty spikes      c  Chicken Launcher pickup
- *   .  empty             R  Sewer Rat       T  Toilet Chomper
+ *   .  empty             w  Wrecking Ball   i  Infinite Socks   g  Hyper Grease
+ *                        R  Sewer Rat       T  Toilet Chomper
  *                        B  Sludge Blob     G  Turnip Grenadier
  *                        F  Disco Roach (flying)
  *
@@ -25,6 +26,7 @@
  */
 import type { MusicTrackId } from "../audio/audio-types";
 import { ENEMY_MAP_CHARS, type EnemyKind } from "../gameplay/enemies/enemy-kinds";
+import { POWERUP_MAP_CHARS, type PowerUpId } from "../gameplay/powerups/powerup-ids";
 import { PROP_MAP_CHARS, type PropKind } from "../gameplay/props/prop-kinds";
 import type { WeaponId } from "../gameplay/weapons/weapon-ids";
 
@@ -34,6 +36,7 @@ export type SpawnKind =
   | "playerStart"
   | "dummy"
   | "weaponPickup"
+  | "powerUp"
   | "enemy"
   | "prop"
   | "crackedWall"
@@ -43,6 +46,7 @@ export type SpawnKind =
 export interface SpawnSpec {
   kind: SpawnKind;
   weapon?: WeaponId;
+  powerUp?: PowerUpId;
   enemy?: EnemyKind;
   prop?: PropKind;
   /** Terrain under the marker (default empty) — cracked walls are solid. */
@@ -75,6 +79,12 @@ export const SPAWN_LEGEND: Readonly<Record<string, SpawnSpec>> = {
     ]),
   ),
   ...Object.fromEntries(
+    Object.entries(POWERUP_MAP_CHARS).map(([ch, powerUp]) => [
+      ch,
+      { kind: "powerUp", powerUp } satisfies SpawnSpec,
+    ]),
+  ),
+  ...Object.fromEntries(
     Object.entries(PROP_MAP_CHARS).map(([ch, prop]) => [
       ch,
       { kind: "prop", prop } satisfies SpawnSpec,
@@ -97,6 +107,7 @@ export interface LevelDefinition {
 export interface Spawn {
   kind: SpawnKind;
   weapon?: WeaponId;
+  powerUp?: PowerUpId;
   enemy?: EnemyKind;
   prop?: PropKind;
   /** Tile coordinates. */

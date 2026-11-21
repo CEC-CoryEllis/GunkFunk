@@ -24,7 +24,7 @@ import {
   knockbackFor,
   overlaps,
 } from "../combat/hit-types";
-import type { Liftable } from "../props/prop-context";
+import type { EnemyBody } from "../props/prop-context";
 import type { StageEntity } from "../stage/stage-context";
 import type { EnemyContext, EnemyHandle, EnemyStats } from "./enemy-context";
 import type { EnemyKind } from "./enemy-kinds";
@@ -52,7 +52,7 @@ export type HitReaction = "normal" | "blocked" | "absorbed";
 
 let enemySerial = 0;
 
-export abstract class Enemy implements Damageable, StageEntity, EnemyHandle, Liftable {
+export abstract class Enemy implements Damageable, StageEntity, EnemyHandle, EnemyBody {
   readonly team = "enemy" as const;
   readonly kind: EnemyKind;
   readonly sprite: Phaser.Physics.Arcade.Sprite;
@@ -152,6 +152,27 @@ export abstract class Enemy implements Damageable, StageEntity, EnemyHandle, Lif
     let vy = this.body.velocity.y - acceleration * dt;
     vy -= vy * LIFT_DRAG * dt;
     this.body.setVelocityY(Math.max(vy, -MAX_LIFT_SPEED));
+  }
+
+  /** Grease: feet go out from under it and it tumbles the way it was heading (and can bowl others over). */
+  slip(): boolean {
+    if (this.state !== "active" || !this.targetable || !this.onGround) return false;
+    if (this.stats.gravity <= 0) return false;
+    const direction = Math.sign(this.body.velocity.x) || this.facing;
+    this.ctx.fx.word("WHOOPS!", this.x, this.y - this.stats.body.h - 12, "white");
+    this.takeHit({
+      key: `slip-${this.id}-${++this.hitSerial}`,
+      team: "player",
+      kind: "hazard",
+      damage: 1,
+      knockbackX: direction * 240,
+      knockbackY: -260,
+      x: this.x,
+      y: this.y,
+      impact: 1,
+      sfx: "slide",
+    });
+    return true;
   }
 
   // ── Hooks for subclasses ──────────────────────────────────────────────────

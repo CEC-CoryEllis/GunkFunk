@@ -4,13 +4,11 @@
  * It is also a `Damageable` in the shared combat world.
  */
 import * as Phaser from "phaser";
-import { applySheetOrigin, getSheetInfo } from "../../art/texture-registry";
 import { audio } from "../../audio";
 import { type ActionSnapshot, emptySnapshot } from "../../core/input/actions";
 import { SpeechBubble } from "../../ui/speech-bubble";
 import type { CameraTarget } from "../camera/camera-director";
 import type { CharacterDefinition, QuipTrigger } from "../characters/character-definition";
-import { presentHit } from "../combat/hit-feedback";
 import {
   type Damageable,
   type HitInfo,
@@ -20,24 +18,31 @@ import {
   knockbackFor,
 } from "../combat/hit-types";
 import type { PickupCollector } from "../pickups/weapon-pickup";
+import type { PowerUpId } from "../powerups/powerup-ids";
 import type { PropPlayer } from "../props/prop-context";
 import type { StageContext } from "../stage/stage-context";
 import { HeldWeapon } from "../weapons/held-weapon";
-import { shotRequests } from "../weapons/shot-pattern";
 import type { CollectOutcome, OwnedWeapon } from "../weapons/weapon-inventory";
 import type { WeaponId } from "../weapons/weapon-ids";
+import { WreckingBall } from "./forms/wrecking-ball";
 import { MovementController } from "./movement-controller";
 import { DEFAULT_TUNING } from "./movement-tuning";
 import { type LifeState, PlayerAnimator } from "./player-animator";
 import { type CombatFrame, PlayerCombat } from "./player-combat";
 import { playCombatFeedback, playMovementFeedback } from "./player-feedback";
+import { fireShots, landMelee } from "./player-attacks";
 import { PlayerHealth } from "./player-health";
+import { PlayerPowerUps } from "./player-powerups";
+import { PlayerShape } from "./player-shape";
+import { PlayerTransformations } from "./player-transformations";
 import { readSensors } from "./player-sensors";
 import { QuipDirector } from "./quip-director";
 
 const HURT_TIME = 0.35;
 const HAZARD_BOUNCE = 360;
 const CHARGE_WALK_SCALE = 0.35;
+/** Grace period after turning back from the ball. */
+const DEFLATE_INVULNERABLE = 0.8;
 
 export interface PlayerCallbacks {
   onHealthChanged(health: number, max: number): void;
@@ -46,6 +51,8 @@ export interface PlayerCallbacks {
   /** Current weapon, level or ammo changed. */
   onWeaponChanged(weapon: OwnedWeapon | null): void;
   onWeaponCollected(outcome: CollectOutcome): void;
+  /** A power-up started (or refreshed) or ended. */
+  onPowerUp(id: PowerUpId, active: boolean): void;
 }
 
 export class Player implements CameraTarget, Damageable, PickupCollector, PropPlayer {
@@ -54,6 +61,10 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
   readonly movement: MovementController;
   readonly combat: PlayerCombat;
   readonly health: PlayerHealth;
+  readonly powerUps: PlayerPowerUps;
+  /** The Wrecking Ball form; while active it drives the body instead of normal movement. */
+  readonly ball: WreckingBall;
+  private readonly transforms: PlayerTransformations;
   life: LifeState = "alive";
   /** Last combat step, read by the debug overlay and presentation. */
   lastCombat?: CombatFrame;
@@ -64,7 +75,7 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
   private readonly bubble: SpeechBubble;
   private readonly held: HeldWeapon;
   private lifeTimer = 0;
-  private lowBody: boolean | null = null;
+  private readonly shape: PlayerShape;
 
   constructor(
     private readonly ctx: StageContext,
@@ -74,14 +85,27 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
   ) {
     const { scene } = ctx;
     this.sprite = scene.physics.add.sprite(spawn.x, spawn.y, definition.sheetKey, 0);
-    applySheetOrigin(this.sprite, definition.sheetKey);
     this.sprite.setDepth(20);
     this.body = this.sprite.body as Phaser.Physics.Arcade.Body;
     this.body.setAllowGravity(false);
-    this.setBodySize(false);
+    this.shape = new PlayerShape(this.sprite, this.body, definition);
     this.movement = new MovementController({ ...DEFAULT_TUNING, ...definition.tuning });
     this.combat = new PlayerCombat(definition);
     this.health = new PlayerHealth(definition.maxHealth);
+    this.powerUps = new PlayerPowerUps(this.combat.inventory, this.movement);
+    this.ball = new WreckingBall(ctx, this.sprite, this.body, definition.sheetKey);
+    this.transforms = new PlayerTransformations(this.powerUps, this.ball, {
+      changed: (id, active) => {
+        this.callbacks.onPowerUp(id, active);
+        this.callbacks.onWeaponChanged(this.combat.inventory.current);
+      },
+      say: (trigger) => this.say(trigger, true),
+      cancelCombat: () => {
+        this.combat.cancel();
+        this.lastCombat = undefined;
+      },
+      restoreBulgo: (announce) => this.restoreBulgo(announce),
+    });
     this.animator = new PlayerAnimator(this.sprite, definition.sheetKey);
     this.quips = new QuipDirector(definition.quips);
     this.bubble = new SpeechBubble(scene);
@@ -127,15 +151,26 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
     return this.body.velocity.y > 0;
   }
 
+  /** Hyper Grease is running (the grease trail reads this). */
+  get greasy(): boolean {
+    return this.powerUps.isActive("hyperGrease") && !this.ball.active;
+  }
+
   launch(speed: number): void {
     if (!this.targetable) return;
+    if (this.ball.active) {
+      this.ball.launch(speed);
+      return;
+    }
     this.movement.launch();
     this.movement.refreshAirJumps();
     this.body.setVelocityY(-speed);
   }
 
   addLift(acceleration: number): void {
-    if (this.targetable) this.movement.addLift(acceleration);
+    if (!this.targetable) return;
+    if (this.ball.active) this.ball.addLift(acceleration);
+    else this.movement.addLift(acceleration);
   }
 
   carry(dx: number, dy: number): void {
@@ -151,6 +186,7 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
   }
 
   takeHit(hit: HitInfo): HitResult {
+    if (this.ball.active) return this.transforms.absorbHit(hit);
     const applied = this.takeDamage(
       hit.damage,
       hit.radial ? hit.x : this.x - knockbackFor(hit, this.x),
@@ -169,6 +205,13 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
     return true;
   }
 
+  /** Picking up a power-up: starts it (or refreshes its timer). */
+  collectPowerUp(id: PowerUpId): boolean {
+    if (!this.targetable) return false;
+    this.transforms.collect(id);
+    return true;
+  }
+
   say(trigger: QuipTrigger, force = false): void {
     const line = this.quips.trigger(trigger, force);
     if (line) this.bubble.say(line, this.definition.voicePitch);
@@ -181,7 +224,9 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
     if (this.life === "dying" || this.life === "dead" || this.life === "respawning") {
       this.updateLifeSequence(dt);
     } else {
-      this.updateAlive(input, dt);
+      this.transforms.tick(dt);
+      if (this.ball.active) this.updateBall(input, dt);
+      else this.updateAlive(input, dt);
     }
     this.sprite.setVisible(
       this.health.invulnerable <= 0 || Math.floor(this.health.invulnerable * 20) % 2 === 0,
@@ -192,10 +237,16 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
   frameUpdate(dt: number): void {
     this.bubble.follow(this.sprite.x, this.sprite.y - 44);
     const frame = this.lastCombat;
-    this.held.sync(this.combat.inventory.current, frame?.shooting ?? false, this.facing, dt);
-    // A charged punch makes Bulgo strobe like he's about to blow.
-    if (frame?.chargeReady && Math.floor(this.ctx.scene.time.now / 60) % 2 === 0) {
+    const weapon = this.ball.active ? null : this.combat.inventory.current;
+    this.held.sync(weapon, frame?.shooting ?? false, this.facing, dt);
+    const now = this.ctx.scene.time.now;
+    // A charged punch makes Bulgo strobe like he's about to blow; a ball about
+    // to run out of air flashes white.
+    const ballEnding = this.transforms.ballEnding;
+    if (frame?.chargeReady && Math.floor(now / 60) % 2 === 0) {
       this.sprite.setTintFill(0xfff27a);
+    } else if (ballEnding && Math.floor(now / 110) % 2 === 0) {
+      this.sprite.setTintFill(0xffffff);
     } else if (this.sprite.tintFill) {
       this.sprite.clearTint();
     }
@@ -242,7 +293,7 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
       comboIndex: this.combat.combo.index,
       finisherIndex: this.definition.combo.length - 1,
     });
-    this.setBodySize(this.movement.crouching || this.movement.state === "slide");
+    this.shape.setLow(this.movement.crouching || this.movement.state === "slide");
     this.checkHazards();
     if (this.sprite.y > this.ctx.level.heightPx + 64) this.die();
 
@@ -263,16 +314,31 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
     this.resolveCombat(frame);
   }
 
+  private updateBall(input: ActionSnapshot, dt: number): void {
+    if (this.life === "hurt") this.life = "alive";
+    this.lastCombat = undefined;
+    this.transforms.updateBall(input, dt);
+    if (this.sprite.y > this.ctx.level.heightPx + 64) this.die();
+  }
+
+  /** After the ball deflates (or on death): Bulgo's own sheet, body and movement come back. */
+  private restoreBulgo(announce: boolean): void {
+    this.shape.restore();
+    this.movement.state = "air";
+    this.movement.facing = this.ball.controller.facing;
+    this.animator.restart("fall");
+    if (!announce) return;
+    this.health.invulnerable = Math.max(this.health.invulnerable, DEFLATE_INVULNERABLE);
+    this.say("deflate", true);
+  }
+
   /** Spawns this step's shots and lands this step's punches. */
   private resolveCombat(frame: CombatFrame): void {
     if (frame.shot) {
       if (this.movement.state === "ground" && Math.abs(this.body.velocity.x) <= 30) {
         this.animator.restart(this.movement.crouching ? "crouch_shoot" : "shoot");
       }
-      const muzzle = this.held.muzzle(this.x, this.y, this.facing);
-      for (const request of shotRequests(frame.shot.level, muzzle, this.facing, this.team)) {
-        this.ctx.projectiles.fire(request);
-      }
+      fireShots(this.ctx, this.held, frame.shot.level, this);
       this.held.playFire(frame.shot.weapon);
       this.callbacks.onWeaponChanged(this.combat.inventory.current);
     }
@@ -280,22 +346,7 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
       this.held.showFor();
       this.callbacks.onWeaponChanged(frame.switched);
     }
-    const area = this.combat.hitbox(this.x, this.y, this.facing, frame.hitActive);
-    if (!area || !frame.attack) return;
-    const attack = frame.attack;
-    const hit: HitInfo = {
-      key: `melee-${this.combat.combo.swingId}`,
-      team: this.team,
-      kind: "melee",
-      damage: attack.damage,
-      knockbackX: this.facing * attack.knockback.x,
-      knockbackY: attack.knockback.y,
-      x: area.x + (this.facing > 0 ? area.width : 0),
-      y: area.y + area.height / 2,
-      impact: attack.impact,
-    };
-    for (const outcome of this.ctx.combat.strike(area, hit))
-      presentHit(this.ctx.fx, hit, outcome.result);
+    landMelee(this.ctx, this.combat, frame, this);
   }
 
   /** World-space rectangle of the live melee hit, or null between hit windows (debug drawing). */
@@ -303,18 +354,8 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
     return this.combat.hitbox(this.x, this.y, this.facing, this.lastCombat?.hitActive ?? false);
   }
 
-  /** The bottom few pixels of the body: what touches floors, hazards and liquids. */
-  private feetRect(): Phaser.Geom.Rectangle {
-    return new Phaser.Geom.Rectangle(
-      this.body.left + 2,
-      this.body.bottom - 6,
-      this.body.width - 4,
-      6,
-    );
-  }
-
   private checkHazards(): void {
-    const hazard = this.ctx.level.hazardAt(this.feetRect());
+    const hazard = this.ctx.level.hazardAt(this.shape.feetRect());
     if (hazard) this.hazardBounce(1, hazard === "sludge" ? "sludge" : "hurt");
   }
 
@@ -352,6 +393,7 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
 
   private die(): void {
     if (this.life === "dying") return;
+    this.transforms.dropAll();
     this.life = "dying";
     this.health.health = 0;
     this.callbacks.onHealthChanged(0, this.health.maxHealth);
@@ -370,7 +412,8 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
     this.body.setVelocityX(0);
     // Corpses still fall (and land) so the melt happens on the floor — or
     // float on the surface if Bulgo met his end in a vat of sludge.
-    const resting = this.body.blocked.down || this.ctx.level.rectTouches(this.feetRect(), "sludge");
+    const resting =
+      this.body.blocked.down || this.ctx.level.rectTouches(this.shape.feetRect(), "sludge");
     this.body.setVelocityY(
       resting ? 0 : Math.min(this.body.velocity.y + this.movement.tuning.gravity * dt, 300),
     );
@@ -412,15 +455,6 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
       },
       0,
     );
-  }
-
-  private setBodySize(low: boolean): void {
-    if (low === this.lowBody) return;
-    this.lowBody = low;
-    const info = getSheetInfo(this.definition.sheetKey);
-    const size = low ? this.definition.body.low : this.definition.body.stand;
-    this.body.setSize(size.w, size.h, false);
-    this.body.setOffset(info.originX - size.w / 2, info.originY - size.h);
   }
 
   private onAnimationFrame(

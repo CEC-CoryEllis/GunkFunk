@@ -11,6 +11,11 @@ import type { WeaponId } from "../gameplay/weapons/weapon-ids";
 import { Enemy } from "../gameplay/enemies/enemy";
 import { createEnemy } from "../gameplay/enemies/enemy-factory";
 import type { EnemyKind } from "../gameplay/enemies/enemy-kinds";
+import { GreaseTrail } from "../gameplay/powerups/grease-trail";
+import type { PowerUpId } from "../gameplay/powerups/powerup-ids";
+import { PowerUpPickup } from "../gameplay/powerups/powerup-pickup";
+import type { ActivePowerUp } from "../gameplay/powerups/powerup-timers";
+import { environmentBlast } from "../gameplay/props/environment-blast";
 import { MovingPlatform } from "../gameplay/props/moving-platform";
 import { type SingleProp, createProp } from "../gameplay/props/prop-factory";
 import type { TrashSurprise } from "../gameplay/props/prop-rules";
@@ -41,7 +46,21 @@ export interface GunkTestHooks {
     weapons: string[];
     shooting: boolean;
     charging: boolean;
+    /** "bulgo", or the Wrecking Ball's phase. */
+    form: string;
+    slamming: boolean;
+    infiniteAmmo: boolean;
+    runSpeed: number;
   };
+  powerUps(): ActivePowerUp[];
+  /** Starts a power-up as if it had been picked up. */
+  grantPowerUp(id: PowerUpId): void;
+  /** Places a power-up pickup floating at world (x, y). */
+  spawnPowerUp(id: PowerUpId, x: number, y: number): void;
+  /** Grease slicks currently on the floor. */
+  greaseSlicks(): number;
+  /** An environment explosion (like a toxic barrel's) centred on world (x, y). */
+  blast(x: number, y: number): void;
   dummies(): { x: number; health: number; knockedOut: boolean }[];
   /** Grants a weapon pickup (test shortcut for upgrades). */
   collect(id: WeaponId): void;
@@ -131,6 +150,10 @@ function installTestHooks(scene: LevelScene): void {
         weapons: p.combat.inventory.all.map((w) => `${w.id}${w.level}`),
         shooting: p.lastCombat?.shooting ?? false,
         charging: p.lastCombat?.charging ?? false,
+        form: p.ball.phase ?? "bulgo",
+        slamming: p.ball.controller.slamming,
+        infiniteAmmo: p.combat.inventory.infiniteAmmo,
+        runSpeed: p.movement.tuning.runSpeed,
       };
     },
     dummies: () =>
@@ -163,6 +186,15 @@ function installTestHooks(scene: LevelScene): void {
     },
     score: () => GameSession.get(scene.game).score,
     props: () => snapshotProps(scene.entities),
+    powerUps: () => scene.player.powerUps.list(),
+    grantPowerUp: (id) => void scene.player.collectPowerUp(id),
+    spawnPowerUp: (id, x, y) => {
+      scene.entities.push(new PowerUpPickup(scene.stageContext, scene.player, id, x, y));
+    },
+    blast: (x, y) =>
+      environmentBlast(scene.stageContext, x, y, { radius: 30, damage: 3, knockback: 300 }),
+    greaseSlicks: () =>
+      scene.entities.find((e): e is GreaseTrail => e instanceof GreaseTrail)?.count ?? 0,
     spawnProp: (kind, x, y, surprise) => {
       const ctx = scene.stageContext;
       scene.entities.push(

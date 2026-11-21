@@ -19,6 +19,7 @@ export const PARTICLE_FRAMES = {
   water: "water",
   junk: "junk",
   brick: "brick",
+  grease: "grease",
 } as const;
 
 const SIZE = 8;
@@ -114,6 +115,16 @@ const MAPS: Readonly<Record<keyof typeof PARTICLE_FRAMES, readonly string[]>> = 
     "........",
     "........",
   ],
+  grease: [
+    "........",
+    "...k....",
+    "..kok...",
+    ".koyok..",
+    ".kooak..",
+    ".kaaak..",
+    "..kkk...",
+    "........",
+  ],
   spark: [
     "...y....",
     "...y....",
@@ -141,6 +152,8 @@ export function buildParticleSheet(): { canvas: PixelCanvas; frames: [string, nu
     c: RAMPS.cyan[2]!,
     r: RAMPS.brick[2]!,
     R: RAMPS.brick[3]!,
+    o: RAMPS.pipe[1]!,
+    a: RAMPS.pipe[0]!,
   };
   names.forEach((name, i) => drawPixelMap(canvas, i * SIZE, 0, MAPS[name], legend));
   return { canvas, frames: names.map((name, i) => [name, i * SIZE]) };

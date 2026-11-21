@@ -25,8 +25,10 @@ export interface CollectOutcome {
 export class WeaponInventory {
   private readonly owned: OwnedWeapon[] = [];
   private index = 0;
-  /** Set by the Infinite Socks power-up (M7): firing costs nothing. */
+  /** Set by the Infinite Socks power-up: firing costs nothing. */
   infiniteAmmo = false;
+  /** Multiplies every weapon's fire interval (Infinite Socks fires faster). */
+  fireIntervalScale = 1;
 
   constructor(start: readonly OwnedWeapon[] = []) {
     for (const weapon of start) this.owned.push({ ...weapon });
@@ -58,6 +60,17 @@ export class WeaponInventory {
       return { kind: "upgraded", weapon };
     }
     return { kind: "ammo", weapon };
+  }
+
+  /** Selects a weapon, adding it at level 1 with pickup ammo if it isn't carried yet (never upgrades). */
+  equip(id: WeaponId): OwnedWeapon {
+    let index = this.owned.findIndex((w) => w.id === id);
+    if (index < 0) {
+      this.owned.push({ id, level: 1, ammo: WEAPONS[id].pickupAmmo });
+      index = this.owned.length - 1;
+    }
+    this.index = index;
+    return this.owned[index]!;
   }
 
   /** Switches to the next (or previous) weapon. Returns the new current weapon. */

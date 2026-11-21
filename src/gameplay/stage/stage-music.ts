@@ -12,6 +12,8 @@ const SECRET_FADE_SECONDS = 0.6;
 export class StageMusic {
   private director = new MusicDirector(1);
   private inSecret = false;
+  /** A transformation is running: the full band plays regardless of fights. */
+  private boosted = false;
 
   constructor(private readonly track: MusicTrackId) {}
 
@@ -23,9 +25,18 @@ export class StageMusic {
 
   /** Call regularly with how many enemies are close to the player. */
   update(dt: number, nearbyEnemies: number): void {
-    if (this.inSecret) return;
+    if (this.inSecret || this.boosted) return;
     const intensity = this.director.update(dt, nearbyEnemies);
     if (intensity !== null) audio.music.setIntensity(intensity);
+  }
+
+  /** Full band on while Bulgo is transformed; back to the fight mix after. */
+  setBoost(on: boolean): void {
+    if (on === this.boosted) return;
+    this.boosted = on;
+    if (this.inSecret) return;
+    this.director = new MusicDirector(1);
+    audio.music.setIntensity(on ? 2 : 1);
   }
 
   enterSecret(firstVisit: boolean): void {
@@ -39,6 +50,6 @@ export class StageMusic {
     this.inSecret = false;
     this.director = new MusicDirector(1);
     audio.music.play(this.track, { fadeInSeconds: SECRET_FADE_SECONDS });
-    audio.music.setIntensity(1);
+    audio.music.setIntensity(this.boosted ? 2 : 1);
   }
 }

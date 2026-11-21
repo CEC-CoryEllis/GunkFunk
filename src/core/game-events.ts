@@ -15,6 +15,8 @@ export const GameEvents = {
 
 /** Registry key holding the latest `WeaponHudPayload` (null = unarmed). */
 export const PLAYER_WEAPON_KEY = "playerWeapon";
+/** Registry key: the power-ups currently running, `ActivePowerUp[]` (HUD timers). */
+export const PLAYER_POWERUPS_KEY = "player-powerups";
 
 export interface WeaponHudPayload {
   id: WeaponId;
