@@ -12,6 +12,7 @@ import {
   GameEvents,
   type HealthChangedPayload,
   PLAYER_HEALTH_KEY,
+  PLAYER_POWERUPS_KEY,
   PLAYER_WEAPON_KEY,
   type WeaponHudPayload,
 } from "../core/game-events";
@@ -27,6 +28,9 @@ import type { EnemyHandle } from "../gameplay/enemies/enemy-context";
 import { createEnemy } from "../gameplay/enemies/enemy-factory";
 import { Effects } from "../gameplay/fx/effects";
 import { Player } from "../gameplay/player/player";
+import { GreaseTrail } from "../gameplay/powerups/grease-trail";
+import { POWERUPS } from "../gameplay/powerups/powerup-definitions";
+import type { PowerUpId } from "../gameplay/powerups/powerup-ids";
 import type { PropContext } from "../gameplay/props/prop-context";
 import { KillCombo } from "../gameplay/scoring/kill-combo";
 import { spawnStageEntities } from "../gameplay/stage/spawn-entities";
@@ -101,6 +105,7 @@ export class LevelScene extends Phaser.Scene {
         onDied: () => this.handlePlayerDeath(),
         onWeaponChanged: (weapon) => this.publishWeapon(weapon),
         onWeaponCollected: (outcome) => this.announceWeapon(outcome),
+        onPowerUp: (id, active) => this.announcePowerUp(id, active),
       },
       this.checkpoint,
     );
@@ -113,7 +118,7 @@ export class LevelScene extends Phaser.Scene {
       },
       enemyDefeated: (enemy, points) => this.scoreKnockout(enemy, points),
       spawnEntity: (entity) => this.pendingEntities.push(entity),
-      liftablesIn: (area) => this.liveEnemies().filter((e) => overlaps(area, e.hurtbox())),
+      enemiesIn: (area) => this.liveEnemies().filter((e) => overlaps(area, e.hurtbox())),
       gemCollected: (x, y) => {
         session.collectGem();
         ctx.addScore(GEM_POINTS, x, y - 12);
@@ -138,6 +143,7 @@ export class LevelScene extends Phaser.Scene {
     this.stageContext = stage;
     this.pendingEntities = [];
     this.entities = spawnStageEntities(stage, this.level.parsed, this.player);
+    this.entities.push(new GreaseTrail(stage));
     this.physics.add.collider(this.player.sprite, this.level.layer, undefined, (_p, tile) =>
       this.level.allowsTileCollision(
         this.player.sprite.body as Phaser.Physics.Arcade.Body,
@@ -197,6 +203,14 @@ export class LevelScene extends Phaser.Scene {
     } else showPickupBanner(this, def.name, "AMMO REFILL!");
   }
 
+  private announcePowerUp(id: PowerUpId, active: boolean): void {
+    if (id === "wreckingBall") this.music.setBoost(active);
+    if (!active) return;
+    const def = POWERUPS[id];
+    audio.music.stinger(def.stinger);
+    showPickupBanner(this, def.name, def.blurb);
+  }
+
   private fixedUpdate(delta: number): void {
     if (this.fx.frozen) return;
     const input = this.inputSource.poll();
@@ -213,6 +227,7 @@ export class LevelScene extends Phaser.Scene {
     }
     this.combat.tick(delta);
     this.updateMusic(delta);
+    this.registry.set(PLAYER_POWERUPS_KEY, this.player.powerUps.list());
   }
 
   /** Knockout points, multiplied by the kill combo. */

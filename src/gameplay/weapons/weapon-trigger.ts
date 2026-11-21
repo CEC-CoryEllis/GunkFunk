@@ -25,7 +25,7 @@ export class WeaponTrigger {
     if (!weapon || !held || this.cooldown > 0) return { empty: false };
     if (!inventory.consume(1)) return { empty: pressed };
     const level = weaponLevel(weapon.id, weapon.level);
-    this.cooldown = level.fireInterval;
+    this.cooldown = level.fireInterval * inventory.fireIntervalScale;
     return { fired: { weapon: { ...weapon }, level }, empty: false };
   }
 }

@@ -14,6 +14,10 @@ export interface PropPlayer extends EnemyTarget {
   bodyRect(): Rect;
   /** Moving downward (landing on things). */
   readonly falling: boolean;
+  /** Standing on something. */
+  readonly grounded: boolean;
+  /** Hyper Grease is running: Bulgo leaves a slippery trail. */
+  readonly greasy: boolean;
   /** Fires the player upward at `speed` px/s and refunds the air jump. */
   launch(speed: number): void;
   /** Upward acceleration for this step (updrafts). */
@@ -24,18 +28,20 @@ export interface PropPlayer extends EnemyTarget {
   heal(amount: number): boolean;
 }
 
-/** Anything an updraft can lift. */
-export interface Liftable {
+/** An enemy as the world pushes it around: updrafts lift it, grease trips it. */
+export interface EnemyBody {
   hurtbox(): Rect;
   applyLift(acceleration: number, dt: number): void;
+  /** Feet go out from under it on grease. Returns true if it slipped. */
+  slip(): boolean;
 }
 
 export interface PropContext extends EnemyContext {
   player: PropPlayer;
   /** Adds an entity (dropped item, debris) to the stage after this step. */
   spawnEntity(entity: StageEntity): void;
-  /** Enemies whose bodies overlap an area (fans lift them). */
-  liftablesIn(area: Rect): Liftable[];
+  /** Enemies whose bodies overlap an area (fans lift them, grease trips them). */
+  enemiesIn(area: Rect): EnemyBody[];
   /** A collectible gem was picked up. */
   gemCollected(x: number, y: number): void;
   /** The player stepped into a secret area (`firstVisit` only once per area). */

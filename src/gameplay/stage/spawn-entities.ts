@@ -5,6 +5,7 @@ import { TILE_SIZE } from "../../config/display";
 import type { ParsedLevel } from "../../levels/level-format";
 import { createEnemy, spawnsAirborne } from "../enemies/enemy-factory";
 import { type PickupCollector, WeaponPickup } from "../pickups/weapon-pickup";
+import { type PowerUpCollector, PowerUpPickup } from "../powerups/powerup-pickup";
 import type { PropContext } from "../props/prop-context";
 import { spawnProps } from "../props/prop-factory";
 import { TrainingDummy } from "../targets/training-dummy";
@@ -13,7 +14,7 @@ import type { StageEntity } from "./stage-context";
 export function spawnStageEntities(
   ctx: PropContext,
   level: ParsedLevel,
-  collector: PickupCollector,
+  collector: PickupCollector & PowerUpCollector,
 ): StageEntity[] {
   const entities: StageEntity[] = spawnProps(ctx, level);
   for (const spawn of level.spawns) {
@@ -27,6 +28,10 @@ export function spawnStageEntities(
       case "weaponPickup":
         if (spawn.weapon)
           entities.push(new WeaponPickup(ctx, collector, spawn.weapon, centerX, middleY));
+        break;
+      case "powerUp":
+        if (spawn.powerUp)
+          entities.push(new PowerUpPickup(ctx, collector, spawn.powerUp, centerX, middleY));
         break;
       case "enemy":
         if (spawn.enemy) {

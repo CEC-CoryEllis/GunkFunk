@@ -62,7 +62,7 @@ export class VentFan implements StageEntity {
     if (inside) player.addLift(FAN_PLAYER_LIFT * this.strengthAt(body.y + body.height));
     if (inside && !this.playerInside) audio.sfx.play("fan_whoosh", { volume: 0.7 });
     this.playerInside = inside;
-    for (const target of this.ctx.liftablesIn(area)) {
+    for (const target of this.ctx.enemiesIn(area)) {
       const box = target.hurtbox();
       target.applyLift(FAN_ENEMY_LIFT * this.strengthAt(box.y + box.height), dt);
     }

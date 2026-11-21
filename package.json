@@ -14,7 +14,7 @@
     "format:check": "oxfmt --check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "node tests/e2e/smoke.mjs && node tests/e2e/combat.mjs && node tests/e2e/enemies.mjs && node tests/e2e/props.mjs",
+    "test:e2e": "node tests/e2e/smoke.mjs && node tests/e2e/combat.mjs && node tests/e2e/enemies.mjs && node tests/e2e/props.mjs && node tests/e2e/powerups.mjs",
     "art:export": "vite-node tools/export-art.ts",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
   },

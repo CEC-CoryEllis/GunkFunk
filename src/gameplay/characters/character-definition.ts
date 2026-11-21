@@ -50,7 +50,10 @@ export type QuipTrigger =
   | "weaponGet"
   | "upgrade"
   | "outOfAmmo"
-  | "megaPunch";
+  | "megaPunch"
+  | "transform"
+  | "deflate"
+  | "powerUp";
 
 export interface CharacterDefinition {
   id: string;

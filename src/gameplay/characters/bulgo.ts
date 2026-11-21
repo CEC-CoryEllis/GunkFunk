@@ -100,6 +100,9 @@ export const BULGO: CharacterDefinition = {
     upgrade: ["MORE! MORE!", "BIGGER IS BETTER!", "UPGRADE, BABY!"],
     outOfAmmo: ["OUT OF AMMO. LAUNDRY DAY.", "*CLICK* ...UH OH.", "EMPTY! USE FISTS!"],
     megaPunch: ["FALCON... NO. BULGO PUNCH!", "SPRINGY ARM OF JUSTICE!"],
+    transform: ["BULGO IS BALL NOW!", "ROLLY POLLY TIME!", "MAKE WAY FOR BIG ROUND BULGO!"],
+    deflate: ["PFFFT... EXCUSE BULGO.", "AWW. BALL TIME OVER.", "BULGO FEEL... SAGGY."],
+    powerUp: ["BULGO FEEL FUNKY!", "OOH, TINGLY!", "WHEEE! SLIPPERY!"],
   },
   voicePitch: 0.75,
 };
