@@ -104,8 +104,19 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 
 ## M7 — Power-ups & transformations
 
-- [ ] Wrecking Ball transformation (own sprite sheet, physics, attacks, stinger)
-- [ ] Infinite Socks, Hyper Grease (slippery trail)
+- [x] Power-up framework (`src/gameplay/powerups/`): definitions, timers that stack and refresh (unit tested), sunburst pickups (`w` `i` `g`), banner + stinger on pickup, HUD timer icons with draining bars that blink near the end, quips
+- [x] Wrecking Ball (12 s) — the first transformation, built as a _form_ that takes over Bulgo's sprite and body:
+  - own 40×40 sheet: eight true pixel-art roll frames (face and spots turn with the ball), squash, ground pound, inflate, deflate; Bulgo's own `inflate` animation leads in
+  - pure `BallController` (unit tested): heavy rolling momentum, rubbery floor and wall bounces, big bouncy jump, ground pound with rebound, rides fans and launch toilets
+  - anything rolled into at speed is bowled over (enemies tumble into others, props break); hard enough smashes cracked walls; ground pound sends a radial shockwave
+  - immune to enemies, spikes and sludge (bounces off them); explosions pop it early ("POP!") at no health cost; flashes in its last 2.5 s, then deflates ("PFFFT!") with a grace period
+  - the full band plays while transformed
+- [x] Infinite Socks (15 s): equips the Sock Cannon, free ammo, ~2× fire rate
+- [x] Hyper Grease (12 s): 1.55× run speed with slippery stopping and turning; drips and leaves glossy slicks that make grounded enemies slip and tumble (bowling others over), fading after 5 s
+- [x] Power-ups stack, refresh on re-collect, and all end on death
+- [x] Placed in the test stage: Wrecking Ball above the second step (roll across the sludge pit into the dummy row), Infinite Socks atop the wall-jump shaft, Hyper Grease before the barrels and slide tunnel
+- [x] `player.ts` kept reviewable: body shape (`player-shape.ts`), attack resolution (`player-attacks.ts`) and power-up orchestration (`player-transformations.ts`) extracted
+- [x] e2e power-up test (`tests/e2e/powerups.mjs`)
 
 ## M8 — Stage 1-1 "Flush Hour"
 
@@ -135,7 +146,8 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 ## Known issues / temporary assets
 
 - None of the art is temporary — all sprites, tiles, backgrounds and the font are final-pipeline generated art, though they will keep being refined.
-- `player.ts` (~440 lines) is orchestration only; the death/respawn lifecycle is the next thing to extract if it grows further. Hazard detection now lives in `LevelWorld.hazardAt`, shared with enemies; the player keeps only its bounce-and-quip reaction.
+- `player.ts` (~470 lines) is orchestration only; the death/respawn lifecycle is the next thing to extract if it grows further. Hazard detection now lives in `LevelWorld.hazardAt`, shared with enemies; the player keeps only its bounce-and-quip reaction.
 - Enemy AI has only been tuned against scripted tests and screenshots — it needs a hands-on difficulty pass (M11).
 - Enemies, projectiles and dropped items don't collide with moving platforms (only Bulgo rides them); items also fall through one-way grates. Fine for the test stage; revisit when M8 needs it.
 - Moving platforms are always two tiles wide (`==`).
+- The Wrecking Ball can't climb ladders or wall-jump; if it rolls somewhere only Bulgo can leave, you wait out the timer.

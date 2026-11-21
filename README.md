@@ -9,8 +9,9 @@ and boundless dim enthusiasm — crawls out of the muck to stop him. Mostly by a
 
 > **Status:** early development. The engine, Bulgo (fully animated), combat with three
 > upgradeable weapons, five enemy types, an interactive world (exploding barrels, launch
-> toilets, a toppling vending machine, fans, hydrants, platforms, cracked walls and secrets)
-> and a test stage to try it all in are playable. See [`CHECKLIST.md`](CHECKLIST.md) for exactly what works and what's
+> toilets, a toppling vending machine, fans, hydrants, platforms, cracked walls and secrets),
+> three power-ups including the Wrecking Ball transformation, and a test stage to try it all
+> in are playable. See [`CHECKLIST.md`](CHECKLIST.md) for exactly what works and what's
 > next, and [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) for the architecture.
 
 ## Requirements
@@ -63,8 +64,10 @@ npm run preview
 | Climb ladders                                     | Up / Down                      | Up / Down                  |
 | Wall jump                                         | Jump while sliding down a wall | —                          |
 | Pause                                             | Enter / Esc / P                | Start                      |
+| Wrecking Ball: roll / bounce-jump                 | Left / Right, Jump             | Left / Right, A            |
+| Wrecking Ball: ground pound                       | Down in mid-air                | Down in mid-air            |
 
-Special (V) is bound but arrives with the transformations in milestone M7.
+Special (V) is bound but not used yet.
 
 ## Checks
 
@@ -82,7 +85,8 @@ Individual scripts: `npm run format`, `npm run lint`, `npm run typecheck`, `npm 
   level parsing, movement physics (jump height, coyote time, jump buffering, wall jumps,
   slides), melee combo timing and quips, the combat world, weapon inventory, trigger
   timing, projectile flight and bouncing, homing, shot patterns and charge timing, cell
-  regions and secret areas, moving-platform paths, updraft lift and the prop rules.
+  regions and secret areas, moving-platform paths, updraft lift, the prop rules, Wrecking
+  Ball physics, power-up timers and effects.
 - **Smoke test** (Playwright, `tests/e2e/smoke.mjs`) starts Vite, walks title → menu →
   stage, drives Bulgo through running, jumping, punching, sliding, hazards, wall slides,
   ladders, pause, idle and death/respawn, asserts the outcomes, saves screenshots to
@@ -96,10 +100,14 @@ Individual scripts: `npm run format`, `npm run lint`, `npm run typecheck`, `npm 
 - **Prop test** (`tests/e2e/props.mjs`) runs in the Training Arena: crates and snacks, trash
   can surprises, a barrel chain reaction, the toppling vending machine, hydrant spray, fan
   hover, toilet launch, riding platforms, and breaking the cracked wall into the secret lounge.
+- **Power-up test** (`tests/e2e/powerups.mjs`) runs in the Training Arena: Wrecking Ball pickup,
+  transformation, bowling, immunity, ground pound, sludge bounces, wall smashing, timing out
+  and popping; Hyper Grease speed, trail and slipping enemies; Infinite Socks free rapid fire.
 
 Debug builds can open a specific stage with `?debug&stage=<id>` — `arena` is a flat sandbox
 for trying enemies and props out (`window.gunkDebug.spawnEnemy("rat", x, y)` or
-`window.gunkDebug.spawnProp("barrel", x, 192)` in the console).
+`window.gunkDebug.spawnProp("barrel", x, 192)` or `window.gunkDebug.grantPowerUp("wreckingBall")`
+in the console).
 
 - **Audio render test** (`tests/e2e/audio-render.mjs`) renders every track, stinger and
   sound effect offline, checks levels/clipping/silence, and writes WAVs to `audio-export/`.
