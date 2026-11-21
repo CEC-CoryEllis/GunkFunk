@@ -14,7 +14,7 @@ const { check } = report;
 
 async function run() {
   const vite = await startVite(PORT);
-  const game = await openGame(PORT);
+  const game = await openGame(PORT, { stage: "sewer-test" });
   const { wait, player, dummies, hold, release, teleport, tap, shot } = game;
   const dummyNear = async (x) => (await dummies()).find((d) => Math.abs(d.x - x) < 4);
   try {

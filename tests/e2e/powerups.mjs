@@ -19,7 +19,8 @@ const { check } = report;
 async function run() {
   const vite = await startVite(PORT);
   const game = await openGame(PORT, { stage: "arena" });
-  const { page, wait, player, hold, release, tap, shot } = game;
+  const { page, wait, waitFor, player, hold, release, tap, shot } = game;
+  const form = async () => (await player()).form;
   const hook = (fn, arg) => page.evaluate(fn, arg);
   const enemies = () => hook(() => window.gunkDebug.enemies());
   const powerUps = () => hook(() => window.gunkDebug.powerUps());
@@ -54,14 +55,13 @@ async function run() {
       (await powerUps()).some((p) => p.id === "wreckingBall"),
     );
     await shot(OUT, "01-inflate");
-    await wait(750);
+    await waitFor(async () => (await form()) === "rolling", 3000);
     const ball = await player();
     check(
       "Bulgo pops into a ball",
       ball.form === "rolling" && ball.anim.startsWith("bulgo-ball:"),
       ball.anim,
     );
-    const ballStart = Date.now();
 
     // ── Rolling bowls enemies over, and they can't hurt the ball ──────────
     const pins = [];
@@ -118,9 +118,8 @@ async function run() {
     await shot(OUT, "04-wall");
 
     // ── Time's up: the ball deflates back into Bulgo ───────────────────────
-    const left = 12.6 - (Date.now() - ballStart) / 1000;
-    if (left > 0) await wait(left * 1000);
-    await wait(600);
+    await waitFor(async () => (await form()) === "bulgo", 16000);
+    await wait(200);
     const after = await player();
     check(
       "the ball deflates back into Bulgo when time runs out",
@@ -133,9 +132,9 @@ async function run() {
     // ── Explosions pop the ball early ──────────────────────────────────────
     await reset(200);
     await grant("wreckingBall");
-    await wait(900);
+    await waitFor(async () => (await form()) === "rolling", 3000);
     await hook(() => window.gunkDebug.blast(200, 180));
-    await wait(80);
+    await waitFor(async () => (await form()) !== "rolling", 1000);
     const popped = await player();
     check(
       "an explosion pops the ball",
@@ -143,7 +142,7 @@ async function run() {
       popped.form,
     );
     check("…without costing health", popped.health === 6);
-    await wait(700);
+    await waitFor(async () => (await form()) === "bulgo", 3000);
     check("popping ends the power-up", (await powerUps()).length === 0);
 
     // ── Hyper Grease: faster, and enemies slip on the trail ───────────────

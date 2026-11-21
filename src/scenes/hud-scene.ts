@@ -8,6 +8,7 @@ import { ITEM_SHEET_KEY } from "../art/sprites/props/item-sheet";
 import { PORTRAIT_KEYS } from "../art/texture-registry";
 import { GAME_WIDTH } from "../config/display";
 import {
+  BOSS_HUD_KEY,
   GameEvents,
   type HealthChangedPayload,
   PLAYER_HEALTH_KEY,
@@ -16,7 +17,9 @@ import {
   type WeaponHudPayload,
 } from "../core/game-events";
 import { GameSession } from "../core/game-session";
+import type { BossStatus } from "../gameplay/bosses/boss";
 import type { ActivePowerUp } from "../gameplay/powerups/powerup-timers";
+import { HudBossBar } from "../ui/hud-boss-bar";
 import { HudPowerUps } from "../ui/hud-powerups";
 import { HudWeaponBox } from "../ui/hud-weapon-box";
 import { pixelText, setPixelText } from "../ui/text";
@@ -31,6 +34,7 @@ export class HudScene extends Phaser.Scene {
   private score!: Phaser.GameObjects.BitmapText;
   private gems!: Phaser.GameObjects.BitmapText;
   private powerUps!: HudPowerUps;
+  private bossBar!: HudBossBar;
   private health: HealthChangedPayload = { health: 0, maxHealth: 0 };
   private displayedScore = 0;
 
@@ -57,6 +61,7 @@ export class HudScene extends Phaser.Scene {
     const weaponBox = new HudWeaponBox(this, 104, 4);
     weaponBox.set((this.registry.get(PLAYER_WEAPON_KEY) as WeaponHudPayload | null) ?? null);
     this.powerUps = new HudPowerUps(this, 172, 4);
+    this.bossBar = new HudBossBar(this);
 
     const events = this.game.events;
     const onHealth = (payload: HealthChangedPayload) => {
@@ -80,9 +85,11 @@ export class HudScene extends Phaser.Scene {
     });
   }
 
-  override update(time: number): void {
+  override update(time: number, delta: number): void {
     const active = (this.registry.get(PLAYER_POWERUPS_KEY) as ActivePowerUp[] | undefined) ?? [];
     this.powerUps.set(active, time);
+    const boss = (this.registry.get(BOSS_HUD_KEY) as BossStatus | null | undefined) ?? null;
+    this.bossBar.set(boss, delta / 1000);
     // Score counts up arcade-style instead of jumping.
     const target = GameSession.get(this.game).score;
     if (this.displayedScore !== target) {

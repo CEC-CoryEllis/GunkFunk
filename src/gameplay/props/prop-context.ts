@@ -5,6 +5,7 @@
  */
 import type * as Phaser from "phaser";
 import type { CellRegion } from "../../levels/cell-regions";
+import type { BossStatus } from "../bosses/boss";
 import type { Rect } from "../combat/hit-types";
 import type { EnemyContext, EnemyTarget } from "../enemies/enemy-context";
 import type { StageEntity } from "../stage/stage-context";
@@ -50,4 +51,12 @@ export interface PropContext extends EnemyContext {
   secretLeft(): void;
   /** Makes a physics object solid to the player from above (moving platforms). */
   collidePlayerWith(object: Phaser.GameObjects.GameObject): void;
+  /** A checkpoint was touched: lost lives respawn here from now on. */
+  checkpointReached(x: number, y: number): void;
+  /** The player walked into the stage exit. */
+  exitReached(): void;
+  /** A boss fight started (camera locks to `arena`, boss music) or ended (null). */
+  bossFight(arena: Rect | null): void;
+  /** Shows the boss health bar, or hides it with null. */
+  bossStatus(status: BossStatus | null): void;
 }

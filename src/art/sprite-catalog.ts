@@ -4,6 +4,7 @@
  * up everywhere.
  */
 import type { SheetSpec } from "./pixel/sprite-sheet";
+import { clogSheetSpec } from "./sprites/bosses/clog-sheet";
 import { ballSheetSpec } from "./sprites/bulgo/ball-sheet";
 import { bulgoSheetSpec } from "./sprites/bulgo/bulgo-sheet";
 import { dummySheetSpec } from "./sprites/dummy/dummy-sheet";
@@ -17,6 +18,7 @@ import { itemSheetSpec } from "./sprites/props/item-sheet";
 import { largePropSheetSpec } from "./sprites/props/large-props-sheet";
 import { smallPropSheetSpec } from "./sprites/props/small-props-sheet";
 import { sludgeSheetSpec } from "./sprites/hazards/sludge";
+import { checkpointSheetSpec, exitSheetSpec, gateSheetSpec } from "./sprites/stage/stage-sheets";
 import {
   greaseSheetSpec,
   powerUpIconSheetSpec,
@@ -48,5 +50,9 @@ export function spriteCatalog(): SheetSpec[] {
     powerUpSheetSpec(),
     powerUpIconSheetSpec(),
     greaseSheetSpec(),
+    checkpointSheetSpec(),
+    exitSheetSpec(),
+    gateSheetSpec(),
+    clogSheetSpec(),
   ];
 }

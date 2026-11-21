@@ -16,7 +16,7 @@ const { check } = report;
 
 async function run() {
   const vite = await startVite(PORT);
-  const game = await openGame(PORT);
+  const game = await openGame(PORT, { stage: "sewer-test" });
   const { page, wait, player, hold, release, tap } = game;
   const shot = (name) => game.shot(OUT, name);
   try {

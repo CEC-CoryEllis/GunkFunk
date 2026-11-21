@@ -22,4 +22,6 @@ export interface StageContext {
 export interface StageEntity {
   /** Runs once per fixed physics step. Return false to be removed. */
   fixedUpdate(dt: number): boolean;
+  /** Bulgo lost a life and is back at a checkpoint (boss fights reset). */
+  playerRespawned?(): void;
 }

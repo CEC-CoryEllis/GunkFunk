@@ -166,6 +166,23 @@ export class LevelWorld {
     }
   }
 
+  /**
+   * Makes cells solid (or empty again) without touching how the map looks:
+   * boss-arena gates draw their own bars over invisible blocking tiles.
+   */
+  setBlocking(cells: readonly Cell[], blocking: boolean): void {
+    for (const { tx, ty } of cells) {
+      this.parsed.terrain[ty]![tx] = blocking ? "solid" : "empty";
+      if (!blocking) {
+        this.layer.removeTileAt(tx, ty);
+        continue;
+      }
+      const tile = this.layer.putTileAt(TILE.brickBase + 15, tx, ty);
+      tile.setCollision(true, true, true, true);
+      tile.setVisible(false);
+    }
+  }
+
   isCracked(tx: number, ty: number): boolean {
     return this.cracked.has(`${tx},${ty}`);
   }

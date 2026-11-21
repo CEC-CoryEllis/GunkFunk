@@ -3,20 +3,23 @@
  */
 import { TILE_SIZE } from "../../config/display";
 import type { ParsedLevel } from "../../levels/level-format";
+import { spawnBossArenas } from "../bosses/spawn-bosses";
 import { createEnemy, spawnsAirborne } from "../enemies/enemy-factory";
 import { type PickupCollector, WeaponPickup } from "../pickups/weapon-pickup";
 import { type PowerUpCollector, PowerUpPickup } from "../powerups/powerup-pickup";
 import type { PropContext } from "../props/prop-context";
 import { spawnProps } from "../props/prop-factory";
 import { TrainingDummy } from "../targets/training-dummy";
+import { Checkpoint } from "./checkpoint";
 import type { StageEntity } from "./stage-context";
+import { StageExit } from "./stage-exit";
 
 export function spawnStageEntities(
   ctx: PropContext,
   level: ParsedLevel,
   collector: PickupCollector & PowerUpCollector,
 ): StageEntity[] {
-  const entities: StageEntity[] = spawnProps(ctx, level);
+  const entities: StageEntity[] = [...spawnProps(ctx, level), ...spawnBossArenas(ctx, level)];
   for (const spawn of level.spawns) {
     const centerX = spawn.tx * TILE_SIZE + TILE_SIZE / 2;
     const floorY = (spawn.ty + 1) * TILE_SIZE;
@@ -39,6 +42,16 @@ export function spawnStageEntities(
             createEnemy(spawn.enemy, ctx, centerX, spawnsAirborne(spawn.enemy) ? middleY : floorY),
           );
         }
+        break;
+      case "checkpoint":
+        entities.push(new Checkpoint(ctx, centerX, floorY));
+        break;
+      case "exit":
+        entities.push(new StageExit(ctx, centerX, floorY));
+        break;
+      // Bosses and their gates are built by spawnBossArenas.
+      case "boss":
+      case "gate":
         break;
       // Props, walls, secrets and platform stops are built by spawnProps.
       case "prop":

@@ -1,7 +1,7 @@
 /**
  * Every music decision for one stage: the stage track, the full band joining
- * in during fights (via MusicDirector), and the elevator-muzak lounge version
- * while the player hangs out in a secret area.
+ * in during fights (via MusicDirector), the elevator-muzak lounge version
+ * while the player hangs out in a secret area, and boss fight music.
  */
 import { audio } from "../../audio";
 import type { MusicTrackId } from "../../audio/audio-types";
@@ -14,6 +14,7 @@ export class StageMusic {
   private inSecret = false;
   /** A transformation is running: the full band plays regardless of fights. */
   private boosted = false;
+  private bossFight = false;
 
   constructor(private readonly track: MusicTrackId) {}
 
@@ -25,7 +26,7 @@ export class StageMusic {
 
   /** Call regularly with how many enemies are close to the player. */
   update(dt: number, nearbyEnemies: number): void {
-    if (this.inSecret || this.boosted) return;
+    if (this.inSecret || this.boosted || this.bossFight) return;
     const intensity = this.director.update(dt, nearbyEnemies);
     if (intensity !== null) audio.music.setIntensity(intensity);
   }
@@ -37,6 +38,23 @@ export class StageMusic {
     if (this.inSecret) return;
     this.director = new MusicDirector(1);
     audio.music.setIntensity(on ? 2 : 1);
+  }
+
+  /** Mini-boss music while a boss fight is on; the stage track afterwards. */
+  setBossFight(on: boolean): void {
+    if (on === this.bossFight) return;
+    this.bossFight = on;
+    this.director = new MusicDirector(1);
+    if (on) audio.music.stinger("boss_intro");
+    audio.music.play(on ? "miniboss" : this.track, { fadeInSeconds: on ? 0.3 : 1 });
+    audio.music.setIntensity(on || this.boosted ? 2 : 1);
+  }
+
+  /** The stage is over: let the fanfare play on its own. */
+  finish(): void {
+    this.bossFight = false;
+    audio.music.stop(0.4);
+    audio.music.stinger("level_clear");
   }
 
   enterSecret(firstVisit: boolean): void {

@@ -5,7 +5,7 @@
 import type { SfxId } from "../../audio/audio-types";
 import type { ParticleKind } from "../fx/effects";
 
-export type ProjectileKind = "sock" | "snot" | "snotSmall" | "chicken" | "stinkBomb";
+export type ProjectileKind = "sock" | "snot" | "snotSmall" | "chicken" | "stinkBomb" | "hairball";
 
 export type ImpactBehaviour = "vanish" | "splat" | "explode";
 
@@ -138,6 +138,26 @@ export const PROJECTILES: Readonly<Record<ProjectileKind, ProjectileDefinition>>
     hitSfx: "burp",
     particle: "stink",
     words: ["PEE-YEW!", "STINKY!"],
+    faceVelocity: false,
+  },
+  /** Spat by The Clog: a wet gob of hair that bounces twice, then splats. */
+  hairball: {
+    kind: "hairball",
+    sheetKey: "projectiles",
+    anim: "hairball",
+    radius: 4,
+    gravity: 700,
+    maxBounces: 2,
+    bounciness: 0.55,
+    friction: 0.8,
+    lifetime: 3.5,
+    damage: 1,
+    knockback: { x: 140, y: -180 },
+    impact: 0.4,
+    onImpact: "splat",
+    hitSfx: "snot_splat",
+    particle: "splinter",
+    words: ["HAIRY!", "GROSS!"],
     faceVelocity: false,
   },
 };
