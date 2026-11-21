@@ -34,6 +34,8 @@ let clogHitSerial = 0;
 export class TheClog implements Boss {
   readonly team = "enemy" as const;
   readonly name = "THE CLOG";
+  readonly music = "miniboss" as const;
+  readonly endsStage = false;
   readonly maxHealth = CLOG_MAX_HEALTH;
   health = CLOG_MAX_HEALTH;
   readonly brain = new ClogBrain();

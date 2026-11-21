@@ -4,6 +4,7 @@
  * instance.
  */
 import type * as Phaser from "phaser";
+import type { OwnedWeapon } from "../gameplay/weapons/weapon-inventory";
 import { GameEvents } from "./game-events";
 
 export const STARTING_LIVES = 3;
@@ -15,6 +16,8 @@ export class GameSession {
   gems = 0;
   secrets = 0;
   characterId = "bulgo";
+  /** Weapons Bulgo carried out of the last stage cleared (null at the start of a game). */
+  loadout: OwnedWeapon[] | null = null;
 
   constructor(private readonly events: Phaser.Events.EventEmitter) {}
 

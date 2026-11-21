@@ -36,6 +36,11 @@ describe("stage tally", () => {
     expect(slow.lines[1]!.value).toBe("5/5");
   });
 
+  it("leaves out categories a stage doesn't have (boss stages)", () => {
+    const tally = tallyStage({ ...result, gemsTotal: 0, gems: 0, secretsTotal: 0, secrets: 0 });
+    expect(tally.lines.map((l) => l.label)).toEqual(["TIME"]);
+  });
+
   it("formats times as m:ss", () => {
     expect(formatTime(0)).toBe("0:00");
     expect(formatTime(65.9)).toBe("1:05");

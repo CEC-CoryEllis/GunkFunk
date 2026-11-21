@@ -2,7 +2,7 @@
  * End-to-end stage test (M8) for Stage 1-1 "Flush Hour": checkpoints and
  * respawning, the toilet route up to the catwalks, the whole fight with THE
  * CLOG (armour, stun window, reset on death, defeat), and the stage exit with
- * its tally and the way back to the title.
+ * its tally, and continuing to the boss stage with Bulgo's weapons.
  *
  *   node tests/e2e/stage.mjs
  */
@@ -179,8 +179,19 @@ async function run() {
     await wait(3500);
     await shot(OUT, "07-tally");
     await page.keyboard.press("KeyZ");
-    const title = await waitFor(() => sceneActive("Title"), 3000);
-    check("any button returns to the title", title);
+    const onward = await waitFor(
+      async () =>
+        sceneActive("Level") && (await hook(() => window.gunkDebug.stage()))?.id === "throne-room",
+      5000,
+    );
+    check("any button continues to the boss stage", onward);
+    await wait(500);
+    const carried = (await player()).weapons;
+    check(
+      "…with the weapons Bulgo was carrying",
+      carried.some((w) => w.startsWith("chicken")),
+      carried.join(","),
+    );
   } finally {
     await game.browser.close();
     vite.stop();

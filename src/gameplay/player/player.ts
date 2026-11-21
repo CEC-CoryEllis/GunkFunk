@@ -82,6 +82,8 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
     readonly definition: CharacterDefinition,
     private readonly callbacks: PlayerCallbacks,
     spawn: { x: number; y: number },
+    /** Weapons carried over from the previous stage (defaults to the character's). */
+    loadout?: readonly OwnedWeapon[],
   ) {
     const { scene } = ctx;
     this.sprite = scene.physics.add.sprite(spawn.x, spawn.y, definition.sheetKey, 0);
@@ -90,7 +92,7 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
     this.body.setAllowGravity(false);
     this.shape = new PlayerShape(this.sprite, this.body, definition);
     this.movement = new MovementController({ ...DEFAULT_TUNING, ...definition.tuning });
-    this.combat = new PlayerCombat(definition);
+    this.combat = new PlayerCombat(definition, loadout);
     this.health = new PlayerHealth(definition.maxHealth);
     this.powerUps = new PlayerPowerUps(this.combat.inventory, this.movement);
     this.ball = new WreckingBall(ctx, this.sprite, this.body, definition.sheetKey);

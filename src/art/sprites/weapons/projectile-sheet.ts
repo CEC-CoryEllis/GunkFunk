@@ -24,6 +24,7 @@ const slimePaint = shade(RAMPS.sludge, { bias: 0.15 });
 const chickenPaint = shade(RAMPS.gold, { bias: 0.15 });
 const stinkPaint = shade(RAMPS.sludge, { bias: -0.15 });
 const hairballPaint = shade(RAMPS.burlap, { bias: 0 });
+const waterPaint = shade(RAMPS.cyan, { bias: 0 });
 
 /** A sock flying right, toe first, its cuff flapping behind. */
 function sockFrame(c: PixelCanvas, flap: number): void {
@@ -85,6 +86,36 @@ function hairballFrame(c: PixelCanvas, turn: number): void {
   c.plot(7, 11, RAMPS.sludge[3]!);
 }
 
+/** The Flush-o-Tron's lobbed ball of toilet water, swirling. */
+function flushBombFrame(c: PixelCanvas, turn: number): void {
+  outlinedLayer(c, OUTLINE, (l) => fillCircle(l, 8, 8, 4.5, waterPaint));
+  const a = turn * Math.PI;
+  line(c, 8, 8, Math.round(8 + Math.cos(a) * 3), Math.round(8 + Math.sin(a) * 3), WHITE);
+  c.plot(6, 6, WHITE);
+}
+
+/** A plunger fired cup-first with a little rocket burn behind it. */
+function plungerMissileFrame(c: PixelCanvas, flame: boolean): void {
+  outlinedLayer(c, OUTLINE, (l) => {
+    fillRect(l, 2, 7, 8, 2, shade(RAMPS.pipe, { bias: 0.1 }));
+    fillEllipse(l, 12, 8, 3, 4.5, shade(RAMPS.shorts, { bias: 0 }));
+  });
+  c.plot(1, 7, flame ? RAMPS.fire[3]! : RAMPS.fire[2]!);
+  c.plot(0, 8, flame ? RAMPS.fire[2]! : RAMPS.fire[3]!);
+  if (flame) c.plot(0, 7, WHITE);
+}
+
+/** One of Stinkbottom's chemistry experiments, tumbling. */
+function flaskFrame(c: PixelCanvas, tilt: number): void {
+  outlinedLayer(c, OUTLINE, (l) => {
+    fillCircle(l, 8, 10, 4, shade(RAMPS.cyan, { bias: 0.2 }));
+    fillRect(l, 7 + tilt, 3, 3, 4, shade(RAMPS.cyan, { bias: 0.2 }));
+  });
+  fillEllipse(c, 8, 11, 3, 2, RAMPS.sludge[3]!);
+  c.plot(7, 8, WHITE);
+  fillRect(c, 7 + tilt, 2, 3, 1, RAMPS.pipe[2]!);
+}
+
 function stinkBombFrame(c: PixelCanvas, spark: boolean): void {
   outlinedLayer(c, OUTLINE, (l) => fillCircle(l, 8, 9, 3.6, stinkPaint));
   c.plot(7, 7, RAMPS.sludge[4]!);
@@ -141,6 +172,24 @@ export function projectileSheetSpec(): SheetSpec {
         frameRate: 10,
         repeat: -1,
         frames: [0, 1, 2, 3].map((i) => (c: PixelCanvas) => hairballFrame(c, (i * Math.PI) / 4)),
+      },
+      {
+        name: "flush_bomb",
+        frameRate: 12,
+        repeat: -1,
+        frames: [0, 0.5, 1, 1.5].map((t) => (c: PixelCanvas) => flushBombFrame(c, t)),
+      },
+      {
+        name: "plunger_missile",
+        frameRate: 14,
+        repeat: -1,
+        frames: [true, false].map((f) => (c: PixelCanvas) => plungerMissileFrame(c, f)),
+      },
+      {
+        name: "flask",
+        frameRate: 8,
+        repeat: -1,
+        frames: [-1, 0, 1, 0].map((t) => (c: PixelCanvas) => flaskFrame(c, t)),
       },
     ],
   };

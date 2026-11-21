@@ -5,7 +5,16 @@
 import type { SfxId } from "../../audio/audio-types";
 import type { ParticleKind } from "../fx/effects";
 
-export type ProjectileKind = "sock" | "snot" | "snotSmall" | "chicken" | "stinkBomb" | "hairball";
+export type ProjectileKind =
+  | "sock"
+  | "snot"
+  | "snotSmall"
+  | "chicken"
+  | "stinkBomb"
+  | "hairball"
+  | "flushBomb"
+  | "plungerMissile"
+  | "flask";
 
 export type ImpactBehaviour = "vanish" | "splat" | "explode";
 
@@ -158,6 +167,68 @@ export const PROJECTILES: Readonly<Record<ProjectileKind, ProjectileDefinition>>
     hitSfx: "snot_splat",
     particle: "splinter",
     words: ["HAIRY!", "GROSS!"],
+    faceVelocity: false,
+  },
+  /** Lobbed and dropped by the Flush-o-Tron: bursts into a splash of toilet water. */
+  flushBomb: {
+    kind: "flushBomb",
+    sheetKey: "projectiles",
+    anim: "flush_bomb",
+    radius: 5,
+    gravity: 650,
+    maxBounces: 0,
+    bounciness: 0,
+    friction: 1,
+    lifetime: 4,
+    damage: 1,
+    knockback: { x: 150, y: -220 },
+    impact: 0.5,
+    onImpact: "explode",
+    explosionRadius: 22,
+    hitSfx: "sludge_splash",
+    particle: "water",
+    words: ["SPLOOSH!", "FLUSHED!"],
+    faceVelocity: false,
+  },
+  /** Fired by the wrecked Flush-o-Tron: a slow homing plunger. */
+  plungerMissile: {
+    kind: "plungerMissile",
+    sheetKey: "projectiles",
+    anim: "plunger_missile",
+    radius: 5,
+    gravity: 0,
+    maxBounces: 0,
+    bounciness: 0,
+    friction: 1,
+    lifetime: 3.5,
+    damage: 1,
+    knockback: { x: 180, y: -160 },
+    impact: 0.5,
+    onImpact: "splat",
+    hitSfx: "plunger_fire",
+    particle: "splinter",
+    words: ["THWOOMP!", "PLUNGED!"],
+    faceVelocity: true,
+  },
+  /** Thrown by Professor Stinkbottom: smashes into a stinking chemical cloud. */
+  flask: {
+    kind: "flask",
+    sheetKey: "projectiles",
+    anim: "flask",
+    radius: 4,
+    gravity: 620,
+    maxBounces: 0,
+    bounciness: 0,
+    friction: 1,
+    lifetime: 3,
+    damage: 1,
+    knockback: { x: 120, y: -200 },
+    impact: 0.5,
+    onImpact: "explode",
+    explosionRadius: 18,
+    hitSfx: "burp",
+    particle: "stink",
+    words: ["EUREKA!", "PEE-YEW!"],
     faceVelocity: false,
   },
 };

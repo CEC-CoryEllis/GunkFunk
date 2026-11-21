@@ -8,6 +8,7 @@ import { BOSS_HUD_KEY } from "../core/game-events";
 import type { GameSession } from "../core/game-session";
 import type { BossStatus } from "../gameplay/bosses/boss";
 import type { CameraDirector } from "../gameplay/camera/camera-director";
+import type { MusicTrackId } from "../audio/audio-types";
 import type { Rect } from "../gameplay/combat/hit-types";
 import type { Player } from "../gameplay/player/player";
 import type { StageMusic } from "../gameplay/stage/stage-music";
@@ -30,6 +31,8 @@ export interface StageProgressDeps {
   camera: CameraDirector;
   session: GameSession;
   title: string;
+  /** The stage that follows; none means the world is complete. */
+  next?: string;
 }
 
 export class StageProgress {
@@ -68,9 +71,9 @@ export class StageProgress {
     this.respawnPoint = { x, y };
   }
 
-  bossFight(arena: Rect | null): void {
+  bossFight(arena: Rect | null, music?: MusicTrackId): void {
     this.deps.camera.confine(arena);
-    this.deps.music.setBossFight(arena !== null);
+    if (!this.cleared) this.deps.music.setBossFight(arena !== null, music);
   }
 
   bossStatus(status: BossStatus | null): void {
@@ -84,10 +87,12 @@ export class StageProgress {
     const { scene, player, music, session } = this.deps;
     player.celebrate();
     music.finish();
+    // Bulgo keeps his weapons for the next stage.
+    session.loadout = player.combat.inventory.all.map((weapon) => ({ ...weapon }));
     scene.time.delayedCall(CELEBRATE_MS, () => {
       const result = this.result();
       session.addScore(tallyStage(result).bonus);
-      const data: StageClearData = { result };
+      const data: StageClearData = { result, next: this.deps.next };
       scene.scene.launch(SceneKeys.StageClear, data);
     });
   }

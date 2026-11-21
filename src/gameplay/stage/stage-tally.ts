@@ -44,16 +44,21 @@ export function tallyStage(result: StageResult): Tally {
   const allSecrets = result.secretsTotal > 0 && result.secrets >= result.secretsTotal;
   const lines: TallyLine[] = [
     { label: "TIME", value: formatTime(result.seconds), bonus: timeBonus },
-    {
+  ];
+  // Stages without gems or secrets (boss stages) leave those lines out.
+  if (result.gemsTotal > 0) {
+    lines.push({
       label: "FUNK GEMS",
       value: `${Math.min(result.gems, result.gemsTotal)}/${result.gemsTotal}`,
       bonus: allGems ? ALL_GEMS_BONUS : 0,
-    },
-    {
+    });
+  }
+  if (result.secretsTotal > 0) {
+    lines.push({
       label: "SECRETS",
       value: `${result.secrets}/${result.secretsTotal}`,
       bonus: allSecrets ? ALL_SECRETS_BONUS : 0,
-    },
-  ];
+    });
+  }
   return { lines, bonus: lines.reduce((sum, line) => sum + line.bonus, 0) };
 }

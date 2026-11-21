@@ -12,6 +12,7 @@ import { Enemy } from "../gameplay/enemies/enemy";
 import { createEnemy } from "../gameplay/enemies/enemy-factory";
 import type { EnemyKind } from "../gameplay/enemies/enemy-kinds";
 import { BossArena } from "../gameplay/bosses/boss-arena";
+import { FlushOTron } from "../gameplay/bosses/flushotron";
 import { TheClog } from "../gameplay/bosses/the-clog";
 import { GreaseTrail } from "../gameplay/powerups/grease-trail";
 import type { PowerUpId } from "../gameplay/powerups/powerup-ids";
@@ -63,7 +64,7 @@ export interface GunkTestHooks {
   greaseSlicks(): number;
   /** An environment explosion (like a toxic barrel's) centred on world (x, y). */
   blast(x: number, y: number): void;
-  /** The stage's boss fight, or null if the stage has none. */
+  /** The stage's boss fight, or null if the stage has none. `y` is the boss's feet (or hull bottom). */
   boss(): {
     name: string;
     health: number;
@@ -76,7 +77,10 @@ export interface GunkTestHooks {
   } | null;
   /** Sets the boss's health (finish a fight quickly in tests). */
   setBossHealth(health: number): void;
+  /** Lands a player hit of `damage` on the boss through its own armour rules. */
+  hitBoss(damage: number): void;
   stage(): {
+    id: string;
     respawnX: number;
     respawnY: number;
     seconds: number;
@@ -217,23 +221,49 @@ function installTestHooks(scene: LevelScene): void {
     boss: () => {
       const arena = scene.entities.find((e): e is BossArena => e instanceof BossArena);
       if (!arena) return null;
-      const clog = arena.boss instanceof TheClog ? arena.boss : null;
+      const boss = arena.boss;
+      const brain = boss instanceof TheClog || boss instanceof FlushOTron ? boss.brain : null;
+      const here =
+        boss instanceof TheClog
+          ? { x: boss.x, y: boss.y }
+          : boss instanceof FlushOTron
+            ? { x: boss.centerX, y: boss.hullY }
+            : { x: 0, y: 0 };
       return {
-        name: arena.boss.name,
-        health: arena.boss.health,
-        action: clog?.brain.action ?? "",
-        phase: clog?.brain.phase ?? 1,
-        x: clog && !clog.gone ? clog.x : 0,
-        y: clog && !clog.gone ? clog.y : 0,
+        name: boss.name,
+        health: boss.health,
+        action: brain?.action ?? "",
+        phase: brain?.phase ?? 1,
+        x: boss.gone ? 0 : here.x,
+        y: boss.gone ? 0 : here.y,
         arena: arena.state,
-        gone: arena.boss.gone,
+        gone: boss.gone,
       };
     },
     setBossHealth: (health) => {
       const arena = scene.entities.find((e): e is BossArena => e instanceof BossArena);
-      if (arena?.boss instanceof TheClog) arena.boss.health = health;
+      if (arena?.boss instanceof TheClog || arena?.boss instanceof FlushOTron) {
+        arena.boss.health = health;
+      }
+    },
+    hitBoss: (damage) => {
+      const arena = scene.entities.find((e): e is BossArena => e instanceof BossArena);
+      if (!arena) return;
+      const box = arena.boss.hurtbox();
+      arena.boss.takeHit({
+        key: `debug-hit-${scene.time.now}-${Math.random()}`,
+        team: "player",
+        kind: "melee",
+        damage,
+        knockbackX: 0,
+        knockbackY: 0,
+        x: box.x + box.width / 2,
+        y: box.y + box.height / 2,
+        impact: 0.5,
+      });
     },
     stage: () => ({
+      id: scene.level.definition.id,
       respawnX: scene.progress.respawnPoint.x,
       respawnY: scene.progress.respawnPoint.y,
       seconds: scene.progress.elapsed,

@@ -40,13 +40,13 @@ export class StageMusic {
     audio.music.setIntensity(on ? 2 : 1);
   }
 
-  /** Mini-boss music while a boss fight is on; the stage track afterwards. */
-  setBossFight(on: boolean): void {
+  /** Boss music while a fight is on; the stage track afterwards. */
+  setBossFight(on: boolean, track: MusicTrackId = "miniboss"): void {
     if (on === this.bossFight) return;
     this.bossFight = on;
     this.director = new MusicDirector(1);
     if (on) audio.music.stinger("boss_intro");
-    audio.music.play(on ? "miniboss" : this.track, { fadeInSeconds: on ? 0.3 : 1 });
+    audio.music.play(on ? track : this.track, { fadeInSeconds: on ? 0.3 : 1 });
     audio.music.setIntensity(on || this.boosted ? 2 : 1);
   }
 
