@@ -120,8 +120,18 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 
 ## M8 — Stage 1-1 "Flush Hour"
 
-- [ ] Full stage layout, secrets, alternate route, collectibles, weapon caches, checkpoints
-- [ ] Mini-boss: The Clog
+- [x] Stage 1-1 "Flush Hour" (`src/levels/data/flush-hour.ts`, 304×26 tiles), now what START opens. Six sections: The Outflow, Sludge Falls, The Junction, Pipe Organ, Grease Run, The Clog's Lair
+- [x] Alternate route: a launch toilet reaches the Sludge Falls catwalks (a gem and Infinite Socks) above the sludge pits, grates and moving platform of the low road
+- [x] Two secrets (a lounge behind a cracked wall; an alcove above a launch toilet), five Funk Gems (catwalk, secret lounge, top of the wall-jump shaft, the alcove, the slide tunnel), a weapon cache (Snot Blaster + Chicken Launcher on a block roof), Hyper Grease before the Grease Run
+- [x] Checkpoints (`&`): a plunger whose pennant pops up; respawns happen at the last one touched; it patches Bulgo up a little. Four in Flush Hour, one right before the boss
+- [x] Stage exit (`E`) and stage clear: Bulgo dances, fanfare, then a tally (time bonus under a 5:00 par, gems x/5, secrets x/2, bonuses for finding everything; unit tested) that counts in (any button fast-forwards) and returns to the title
+- [x] Boss framework (`src/gameplay/bosses/`): `Boss` interface; arenas between gate columns (`|`) that slam shut when Bulgo walks in, lock the camera, switch to the mini-boss music and show a boss health bar with a trailing damage segment; beating the boss lifts the gates; losing a life mid-fight resets it
+- [x] Mini-boss THE CLOG (`@`): a car-sized sentient hairball (72×60 sheet: sleep, idle, wind-up, six-frame roll, spit, stunned) with a rubber duck, toothbrush and bottle cap tangled in it
+  - pure `ClogBrain` (unit tested): roll → bonk the wall (ceiling hairballs rain down) → stunned; spit hairball volleys; at half health it enrages — faster rolls that rebound once, five hairballs, coughing up rats
+  - hair armour soaks a point of every hit unless it's stunned ("FWUMP!"); contact hurts, rolling hurts more; barrels in the arena can be part of the fight
+  - defeat: bursts of hair and junk, +5000, a feast and snacks
+- [x] Fixed a latent crash when a running stage was stopped (stage clear, game over)
+- [x] e2e stage test (`tests/e2e/stage.mjs`); smoke and combat suites now open the test stage explicitly; e2e helpers wait on game state instead of the wall clock
 
 ## M9 — Boss
 
@@ -151,3 +161,5 @@ visual review of rendered output. Architecture: [`docs/DEVELOPMENT_PLAN.md`](doc
 - Enemies, projectiles and dropped items don't collide with moving platforms (only Bulgo rides them); items also fall through one-way grates. Fine for the test stage; revisit when M8 needs it.
 - Moving platforms are always two tiles wide (`==`).
 - The Wrecking Ball can't climb ladders or wall-jump; if it rolls somewhere only Bulgo can leave, you wait out the timer.
+- Clearing Flush Hour returns to the title for now; the boss stage (M9) and the results/high-score flow (M10) come next.
+- Flush Hour's difficulty, the 5:00 par time and The Clog's tuning have only been checked by scripted tests — they need a hands-on pass (M11).

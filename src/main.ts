@@ -5,6 +5,7 @@ import * as Phaser from "phaser";
 import { BACKGROUND_COLOR, DEBUG, GAME_HEIGHT, GAME_WIDTH, PHYSICS_FPS } from "./config/display";
 import { BootScene } from "./scenes/boot-scene";
 import { GameOverScene } from "./scenes/game-over-scene";
+import { StageClearScene } from "./scenes/stage-clear-scene";
 import { HudScene } from "./scenes/hud-scene";
 import { LevelScene } from "./scenes/level-scene";
 import { PauseScene } from "./scenes/pause-scene";
@@ -34,7 +35,7 @@ const game = new Phaser.Game({
       debug: DEBUG,
     },
   },
-  scene: [BootScene, TitleScene, LevelScene, HudScene, PauseScene, GameOverScene],
+  scene: [BootScene, TitleScene, LevelScene, HudScene, PauseScene, GameOverScene, StageClearScene],
 });
 
 if (DEBUG) {

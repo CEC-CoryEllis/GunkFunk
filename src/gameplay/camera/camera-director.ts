@@ -21,6 +21,7 @@ const VERTICAL_WINDOW = 46;
 const VERTICAL_BIAS = -18;
 
 export class CameraDirector {
+  private readonly levelBounds: Phaser.Geom.Rectangle;
   private lookAhead = 0;
   private focusY: number;
   private x: number;
@@ -31,6 +32,7 @@ export class CameraDirector {
     bounds: Phaser.Geom.Rectangle,
     initial: { x: number; y: number },
   ) {
+    this.levelBounds = bounds;
     camera.setBounds(bounds.x, bounds.y, bounds.width, bounds.height);
     camera.setRoundPixels(true);
     this.focusY = initial.y;
@@ -58,6 +60,12 @@ export class CameraDirector {
     this.x = Phaser.Math.Linear(this.x, avgX + this.lookAhead, t);
     this.y = Phaser.Math.Linear(this.y, this.focusY + VERTICAL_BIAS, t);
     this.apply();
+  }
+
+  /** Confines the camera to an area (boss arenas), or back to the whole level with null. */
+  confine(area: { x: number; y: number; width: number; height: number } | null): void {
+    const b = area ?? this.levelBounds;
+    this.camera.setBounds(b.x, b.y, b.width, b.height);
   }
 
   /** Jumps straight to a position (respawns, scene starts). */

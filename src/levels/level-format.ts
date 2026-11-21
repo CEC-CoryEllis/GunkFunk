@@ -21,10 +21,15 @@
  *   == moving platform (two tiles), shuttling between the : stops in its row
  *      (sideways) or in its columns (up and down)
  *
+ *   Stage flow
+ *   &  checkpoint        E  stage exit
+ *   @  boss (The Clog)   |  arena gate (open until the boss fight starts)
+ *
  * Spawns stand on the floor of their tile, except pickups and items, which
  * float in the middle of it.
  */
 import type { MusicTrackId } from "../audio/audio-types";
+import { BOSS_MAP_CHARS, type BossKind } from "../gameplay/bosses/boss-kinds";
 import { ENEMY_MAP_CHARS, type EnemyKind } from "../gameplay/enemies/enemy-kinds";
 import { POWERUP_MAP_CHARS, type PowerUpId } from "../gameplay/powerups/powerup-ids";
 import { PROP_MAP_CHARS, type PropKind } from "../gameplay/props/prop-kinds";
@@ -41,12 +46,17 @@ export type SpawnKind =
   | "prop"
   | "crackedWall"
   | "secret"
-  | "platformStop";
+  | "platformStop"
+  | "checkpoint"
+  | "exit"
+  | "boss"
+  | "gate";
 
 export interface SpawnSpec {
   kind: SpawnKind;
   weapon?: WeaponId;
   powerUp?: PowerUpId;
+  boss?: BossKind;
   enemy?: EnemyKind;
   prop?: PropKind;
   /** Terrain under the marker (default empty) — cracked walls are solid. */
@@ -72,6 +82,15 @@ export const SPAWN_LEGEND: Readonly<Record<string, SpawnSpec>> = {
   "%": { kind: "crackedWall", terrain: "solid" },
   "*": { kind: "secret" },
   ":": { kind: "platformStop" },
+  "&": { kind: "checkpoint" },
+  E: { kind: "exit" },
+  "|": { kind: "gate" },
+  ...Object.fromEntries(
+    Object.entries(BOSS_MAP_CHARS).map(([ch, boss]) => [
+      ch,
+      { kind: "boss", boss } satisfies SpawnSpec,
+    ]),
+  ),
   ...Object.fromEntries(
     Object.entries(ENEMY_MAP_CHARS).map(([ch, enemy]) => [
       ch,
@@ -108,6 +127,7 @@ export interface Spawn {
   kind: SpawnKind;
   weapon?: WeaponId;
   powerUp?: PowerUpId;
+  boss?: BossKind;
   enemy?: EnemyKind;
   prop?: PropKind;
   /** Tile coordinates. */

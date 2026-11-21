@@ -11,6 +11,8 @@ import type { WeaponId } from "../gameplay/weapons/weapon-ids";
 import { Enemy } from "../gameplay/enemies/enemy";
 import { createEnemy } from "../gameplay/enemies/enemy-factory";
 import type { EnemyKind } from "../gameplay/enemies/enemy-kinds";
+import { BossArena } from "../gameplay/bosses/boss-arena";
+import { TheClog } from "../gameplay/bosses/the-clog";
 import { GreaseTrail } from "../gameplay/powerups/grease-trail";
 import type { PowerUpId } from "../gameplay/powerups/powerup-ids";
 import { PowerUpPickup } from "../gameplay/powerups/powerup-pickup";
@@ -61,6 +63,27 @@ export interface GunkTestHooks {
   greaseSlicks(): number;
   /** An environment explosion (like a toxic barrel's) centred on world (x, y). */
   blast(x: number, y: number): void;
+  /** The stage's boss fight, or null if the stage has none. */
+  boss(): {
+    name: string;
+    health: number;
+    action: string;
+    phase: number;
+    x: number;
+    y: number;
+    arena: string;
+    gone: boolean;
+  } | null;
+  /** Sets the boss's health (finish a fight quickly in tests). */
+  setBossHealth(health: number): void;
+  stage(): {
+    respawnX: number;
+    respawnY: number;
+    seconds: number;
+    cleared: boolean;
+    gemsTotal: number;
+    secretsTotal: number;
+  };
   dummies(): { x: number; health: number; knockedOut: boolean }[];
   /** Grants a weapon pickup (test shortcut for upgrades). */
   collect(id: WeaponId): void;
@@ -191,6 +214,33 @@ function installTestHooks(scene: LevelScene): void {
     spawnPowerUp: (id, x, y) => {
       scene.entities.push(new PowerUpPickup(scene.stageContext, scene.player, id, x, y));
     },
+    boss: () => {
+      const arena = scene.entities.find((e): e is BossArena => e instanceof BossArena);
+      if (!arena) return null;
+      const clog = arena.boss instanceof TheClog ? arena.boss : null;
+      return {
+        name: arena.boss.name,
+        health: arena.boss.health,
+        action: clog?.brain.action ?? "",
+        phase: clog?.brain.phase ?? 1,
+        x: clog && !clog.gone ? clog.x : 0,
+        y: clog && !clog.gone ? clog.y : 0,
+        arena: arena.state,
+        gone: arena.boss.gone,
+      };
+    },
+    setBossHealth: (health) => {
+      const arena = scene.entities.find((e): e is BossArena => e instanceof BossArena);
+      if (arena?.boss instanceof TheClog) arena.boss.health = health;
+    },
+    stage: () => ({
+      respawnX: scene.progress.respawnPoint.x,
+      respawnY: scene.progress.respawnPoint.y,
+      seconds: scene.progress.elapsed,
+      cleared: scene.progress.isCleared,
+      gemsTotal: scene.progress.gemsTotal,
+      secretsTotal: scene.progress.secretsTotal,
+    }),
     blast: (x, y) =>
       environmentBlast(scene.stageContext, x, y, { radius: 30, damage: 3, knockback: 300 }),
     greaseSlicks: () =>

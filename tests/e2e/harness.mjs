@@ -97,6 +97,18 @@ export async function openGame(port, { stage } = {}) {
     hold: (action) => debug((a) => window.gunkDebug.hold(a), action),
     release: (action) => debug((a) => window.gunkDebug.release(a), action),
     teleport: (tx, ty) => debug(([x, y]) => window.gunkDebug.teleport(x, y), [tx, ty]),
+    /**
+     * Polls until `predicate` is true or `ms` pass; returns whether it came
+     * true. Use instead of fixed sleeps for game-time events — under load the
+     * game runs slower than the wall clock.
+     */
+    async waitFor(predicate, ms) {
+      for (let t = 0; t < ms; t += 100) {
+        if (await predicate()) return true;
+        await wait(100);
+      }
+      return predicate();
+    },
     async tap(action, ms = 60) {
       await helpers.hold(action);
       await wait(ms);

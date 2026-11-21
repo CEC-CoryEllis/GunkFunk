@@ -23,6 +23,7 @@ const sockPaint = shade(RAMPS.eyeWhite, { bias: 0.25 });
 const slimePaint = shade(RAMPS.sludge, { bias: 0.15 });
 const chickenPaint = shade(RAMPS.gold, { bias: 0.15 });
 const stinkPaint = shade(RAMPS.sludge, { bias: -0.15 });
+const hairballPaint = shade(RAMPS.burlap, { bias: 0 });
 
 /** A sock flying right, toe first, its cuff flapping behind. */
 function sockFrame(c: PixelCanvas, flap: number): void {
@@ -67,6 +68,23 @@ function chickenFrame(c: PixelCanvas, legSwing: number): void {
 }
 
 /** The turnip's stink bomb: a green ball with a fizzing fuse. */
+/** A gob of wet hair The Clog spits: lobbed, bounces, splats. */
+function hairballFrame(c: PixelCanvas, turn: number): void {
+  outlinedLayer(c, OUTLINE, (l) => fillCircle(l, 8, 8, 4, hairballPaint));
+  for (let i = 0; i < 4; i++) {
+    const a = turn + (i * Math.PI) / 2;
+    line(
+      c,
+      Math.round(8 + Math.cos(a) * 1),
+      Math.round(8 + Math.sin(a) * 1),
+      Math.round(8 + Math.cos(a + 0.6) * 3.5),
+      Math.round(8 + Math.sin(a + 0.6) * 3.5),
+      i % 2 === 0 ? RAMPS.burlap[3]! : RAMPS.burlap[0]!,
+    );
+  }
+  c.plot(7, 11, RAMPS.sludge[3]!);
+}
+
 function stinkBombFrame(c: PixelCanvas, spark: boolean): void {
   outlinedLayer(c, OUTLINE, (l) => fillCircle(l, 8, 9, 3.6, stinkPaint));
   c.plot(7, 7, RAMPS.sludge[4]!);
@@ -117,6 +135,12 @@ export function projectileSheetSpec(): SheetSpec {
         frameRate: 12,
         repeat: -1,
         frames: [true, false].map((spark) => (c: PixelCanvas) => stinkBombFrame(c, spark)),
+      },
+      {
+        name: "hairball",
+        frameRate: 10,
+        repeat: -1,
+        frames: [0, 1, 2, 3].map((i) => (c: PixelCanvas) => hairballFrame(c, (i * Math.PI) / 4)),
       },
     ],
   };

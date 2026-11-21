@@ -36,6 +36,7 @@ import { KillCombo } from "../gameplay/scoring/kill-combo";
 import { spawnStageEntities } from "../gameplay/stage/spawn-entities";
 import type { StageContext, StageEntity } from "../gameplay/stage/stage-context";
 import { StageMusic } from "../gameplay/stage/stage-music";
+import { StageProgress } from "./stage-progress";
 import { ProjectileSystem } from "../gameplay/weapons/projectile-system";
 import { WEAPONS } from "../gameplay/weapons/weapon-definitions";
 import type { CollectOutcome, OwnedWeapon } from "../gameplay/weapons/weapon-inventory";
@@ -68,7 +69,7 @@ export class LevelScene extends Phaser.Scene {
   private cameraDirector!: CameraDirector;
   private parallax!: ParallaxBackground;
   private debug?: DebugOverlay;
-  private checkpoint!: { x: number; y: number };
+  progress!: StageProgress;
 
   constructor() {
     super(SceneKeys.Level);
@@ -82,7 +83,7 @@ export class LevelScene extends Phaser.Scene {
     this.combat = new CombatWorld();
     this.projectiles = new ProjectileSystem(this, this.level, this.combat, this.fx);
     this.inputSource = new InputSource(this, PLAYER_ONE_BINDINGS);
-    this.checkpoint = this.level.playerStartWorld();
+    const start = this.level.playerStartWorld();
     this.physics.world.setBounds(0, 0, this.level.widthPx, this.level.heightPx + 200);
 
     const session = GameSession.get(this.game);
@@ -107,7 +108,7 @@ export class LevelScene extends Phaser.Scene {
         onWeaponCollected: (outcome) => this.announceWeapon(outcome),
         onPowerUp: (id, active) => this.announcePowerUp(id, active),
       },
-      this.checkpoint,
+      start,
     );
     this.music = new StageMusic(definition.music);
     const stage: PropContext = {
@@ -139,6 +140,10 @@ export class LevelScene extends Phaser.Scene {
           () => !this.player.movement.droppingThrough,
         );
       },
+      checkpointReached: (x, y) => this.progress.checkpointReached(x, y),
+      exitReached: () => this.progress.clear(),
+      bossFight: (arena) => this.progress.bossFight(arena),
+      bossStatus: (status) => this.progress.bossStatus(status),
     };
     this.stageContext = stage;
     this.pendingEntities = [];
@@ -155,11 +160,21 @@ export class LevelScene extends Phaser.Scene {
     this.cameraDirector = new CameraDirector(
       this.cameras.main,
       new Phaser.Geom.Rectangle(0, 0, this.level.widthPx, this.level.heightPx),
-      this.checkpoint,
+      start,
     );
+    this.progress = new StageProgress({
+      scene: this,
+      level: this.level,
+      player: this.player,
+      music: this.music,
+      camera: this.cameraDirector,
+      session,
+      title: definition.title,
+    });
     this.physics.world.on(Phaser.Physics.Arcade.Events.WORLD_STEP, this.fixedUpdate, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.physics.world.off(Phaser.Physics.Arcade.Events.WORLD_STEP, this.fixedUpdate, this);
+      // Arcade may already have torn its world down (it shuts down first).
+      this.physics.world?.off(Phaser.Physics.Arcade.Events.WORLD_STEP, this.fixedUpdate, this);
     });
 
     this.publishHealth(this.player.health.health, this.player.health.maxHealth);
@@ -226,6 +241,7 @@ export class LevelScene extends Phaser.Scene {
       this.pendingEntities = [];
     }
     this.combat.tick(delta);
+    this.progress.tick(delta);
     this.updateMusic(delta);
     this.registry.set(PLAYER_POWERUPS_KEY, this.player.powerUps.list());
   }
@@ -276,8 +292,10 @@ export class LevelScene extends Phaser.Scene {
     if (session.loseLife()) {
       this.cameras.main.fadeOut(250);
       this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-        this.player.respawn(this.checkpoint);
-        this.cameraDirector.snapTo(this.checkpoint.x, this.checkpoint.y);
+        const at = this.progress.respawnPoint;
+        for (const entity of this.entities) entity.playerRespawned?.();
+        this.player.respawn(at);
+        this.cameraDirector.snapTo(at.x, at.y);
         this.cameras.main.fadeIn(250);
       });
     } else {

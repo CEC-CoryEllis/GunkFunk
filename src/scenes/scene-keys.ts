@@ -5,6 +5,7 @@ export const SceneKeys = {
   Hud: "Hud",
   Pause: "Pause",
   GameOver: "GameOver",
+  StageClear: "StageClear",
 } as const;
 
 export interface LevelSceneData {

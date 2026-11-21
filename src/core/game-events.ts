@@ -17,6 +17,8 @@ export const GameEvents = {
 export const PLAYER_WEAPON_KEY = "playerWeapon";
 /** Registry key: the power-ups currently running, `ActivePowerUp[]` (HUD timers). */
 export const PLAYER_POWERUPS_KEY = "player-powerups";
+/** Registry key: the boss health bar, `BossStatus | null`. */
+export const BOSS_HUD_KEY = "boss-hud";
 
 export interface WeaponHudPayload {
   id: WeaponId;

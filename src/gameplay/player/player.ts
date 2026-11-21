@@ -426,6 +426,17 @@ export class Player implements CameraTarget, Damageable, PickupCollector, PropPl
     }
   }
 
+  /** Stage clear: everything stops and Bulgo dances. */
+  celebrate(): void {
+    this.transforms.dropAll();
+    this.combat.cancel();
+    this.lastCombat = undefined;
+    this.bubble.hide();
+    this.life = "celebrating";
+    this.body.setVelocityX(0);
+    this.showLifeAnimation("celebrating");
+  }
+
   /** Puts the player back at a checkpoint with full health and a "ta-da". */
   respawn(at: { x: number; y: number }): void {
     this.sprite.setPosition(at.x, at.y);
