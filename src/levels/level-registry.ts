@@ -1,10 +1,16 @@
 import { DEBUG } from "../config/display";
 import { FLUSH_HOUR } from "./data/flush-hour";
 import { SEWER_TEST_LEVEL } from "./data/sewer-test-level";
+import { THRONE_ROOM } from "./data/throne-room";
 import { TRAINING_ARENA } from "./data/training-arena";
 import type { LevelDefinition } from "./level-format";
 
-const LEVELS: readonly LevelDefinition[] = [FLUSH_HOUR, SEWER_TEST_LEVEL, TRAINING_ARENA];
+const LEVELS: readonly LevelDefinition[] = [
+  FLUSH_HOUR,
+  THRONE_ROOM,
+  SEWER_TEST_LEVEL,
+  TRAINING_ARENA,
+];
 
 export const FIRST_LEVEL_ID = FLUSH_HOUR.id;
 

@@ -23,7 +23,9 @@
  *
  *   Stage flow
  *   &  checkpoint        E  stage exit
- *   @  boss (The Clog)   |  arena gate (open until the boss fight starts)
+ *   @  The Clog          |  arena gate (open until the boss fight starts)
+ *   !  Flush-o-Tron 3000 _  fragile grate (smashed mid-fight)
+ *                        ;  floor that caves into sludge mid-fight
  *
  * Spawns stand on the floor of their tile, except pickups and items, which
  * float in the middle of it.
@@ -50,7 +52,9 @@ export type SpawnKind =
   | "checkpoint"
   | "exit"
   | "boss"
-  | "gate";
+  | "gate"
+  | "fragile"
+  | "collapse";
 
 export interface SpawnSpec {
   kind: SpawnKind;
@@ -85,6 +89,8 @@ export const SPAWN_LEGEND: Readonly<Record<string, SpawnSpec>> = {
   "&": { kind: "checkpoint" },
   E: { kind: "exit" },
   "|": { kind: "gate" },
+  _: { kind: "fragile", terrain: "oneWay" },
+  ";": { kind: "collapse", terrain: "solid" },
   ...Object.fromEntries(
     Object.entries(BOSS_MAP_CHARS).map(([ch, boss]) => [
       ch,
@@ -121,6 +127,8 @@ export interface LevelDefinition {
   theme: LevelTheme;
   music: MusicTrackId;
   rows: readonly string[];
+  /** The stage that follows this one; none means the world is complete. */
+  next?: string;
 }
 
 export interface Spawn {

@@ -89,15 +89,19 @@ export class BossArena implements StageEntity {
   private startFight(): void {
     this.stateValue = "fighting";
     this.setGates(true);
-    this.ctx.bossFight(this.area);
+    this.ctx.bossFight(this.area, this.boss.music);
     this.boss.engage();
   }
 
   private win(): void {
     this.stateValue = "won";
-    this.setGates(false);
     this.ctx.bossFight(null);
     this.ctx.bossStatus(null);
+    if (this.boss.endsStage) {
+      this.ctx.exitReached();
+      return;
+    }
+    this.setGates(false);
   }
 
   private setGates(closed: boolean): void {

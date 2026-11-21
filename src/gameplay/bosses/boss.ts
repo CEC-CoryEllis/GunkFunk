@@ -3,6 +3,7 @@
  * and health for the HUD bar, a dormant → fighting → defeated lifecycle, and
  * a way to reset if Bulgo loses a life mid-fight.
  */
+import type { MusicTrackId } from "../../audio/audio-types";
 import type { Damageable } from "../combat/hit-types";
 import type { StageEntity } from "../stage/stage-context";
 
@@ -14,6 +15,10 @@ export interface BossStatus {
 
 export interface Boss extends Damageable, StageEntity {
   readonly name: string;
+  /** The track that plays during the fight. */
+  readonly music: MusicTrackId;
+  /** Beating it clears the stage (a world's final boss) instead of opening the way on. */
+  readonly endsStage: boolean;
   readonly health: number;
   readonly maxHealth: number;
   /** Health ran out (the defeat sequence may still be playing). */

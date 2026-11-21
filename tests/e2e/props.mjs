@@ -18,7 +18,7 @@ const { check } = report;
 async function run() {
   const vite = await startVite(PORT);
   const game = await openGame(PORT, { stage: "arena" });
-  const { page, wait, player, hold, release, tap, shot } = game;
+  const { page, wait, waitFor, player, hold, release, tap, shot } = game;
   const hook = (fn, arg) => page.evaluate(fn, arg);
   const props = () => hook(() => window.gunkDebug.props());
   const propsOf = async (kind) => (await props()).filter((p) => p.kind === kind);
@@ -39,6 +39,19 @@ async function run() {
     await wait(250);
   }
 
+  /**
+   * Walks Bulgo onto a loose item until it's picked up (it may still be
+   * bouncing, and under load the game runs behind the wall clock).
+   */
+  async function grab(kind, nearX) {
+    return waitFor(async () => {
+      const item = near(await propsOf(kind), nearX, 120)[0];
+      if (!item) return true;
+      await hook(([px, py]) => window.gunkDebug.teleport(px, py), [item.x, item.y + 14]);
+      return false;
+    }, 3000);
+  }
+
   /** Three quick attack taps: jab, uppercut, haymaker (impact 1). */
   async function combo() {
     for (let i = 0; i < 3; i++) {
@@ -56,13 +69,10 @@ async function run() {
     await spawnProp("crate", 78);
     await combo();
     check("combo smashes a crate", (await propsOf("crate")).length === 0);
-    await wait(700); // let the snack bounce to a stop
     const snacks = near(await propsOf("snack"), 78, 80);
     check("a snack pops out of the crate", snacks.length === 1, JSON.stringify(snacks));
-    if (snacks[0]) {
-      await hook(([px, py]) => window.gunkDebug.teleport(px, py), [snacks[0].x, FLOOR]);
-      await wait(300);
-    }
+    await wait(350); // items can't be grabbed the instant they pop out
+    await grab("snack", 78);
     check("eating the snack heals Bulgo", (await player()).health === 5);
     await shot(OUT, "01-crate");
 
@@ -83,11 +93,11 @@ async function run() {
     const scoreBeforeGem = await score();
     await spawnProp("trashCan", 158, "gem");
     await tap("attack", 40);
-    await wait(500);
-    const gem = near(await propsOf("gem"), 158, 80)[0];
-    check("another can spills a Funk Gem", gem !== undefined);
-    if (gem) await hook(([px, py]) => window.gunkDebug.teleport(px, py), [gem.x, FLOOR]);
-    await wait(300);
+    await waitFor(async () => near(await propsOf("gem"), 158, 80).length > 0, 2000);
+    check("another can spills a Funk Gem", near(await propsOf("gem"), 158, 80).length > 0);
+    await wait(350);
+    await grab("gem", 158);
+    await wait(100);
     check("picking up the gem counts it", (await session()).gems === 1);
     check("gems are worth 500", (await score()) - scoreBeforeGem >= 500);
     await shot(OUT, "02-trash");

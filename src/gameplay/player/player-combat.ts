@@ -49,8 +49,12 @@ export class PlayerCombat {
   private readonly trigger = new WeaponTrigger();
   private shootTimer = 0;
 
-  constructor(private readonly character: CharacterDefinition) {
-    this.inventory = new WeaponInventory(character.startingWeapons);
+  /** `loadout` carries weapons over from the previous stage. */
+  constructor(
+    private readonly character: CharacterDefinition,
+    loadout?: readonly OwnedWeapon[],
+  ) {
+    this.inventory = new WeaponInventory(loadout ?? character.startingWeapons);
     this.combo = new MeleeCombo(character.combo, character.airAttack);
   }
 

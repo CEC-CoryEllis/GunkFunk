@@ -52,6 +52,8 @@ export function spawnStageEntities(
       // Bosses and their gates are built by spawnBossArenas.
       case "boss":
       case "gate":
+      case "fragile":
+      case "collapse":
         break;
       // Props, walls, secrets and platform stops are built by spawnProps.
       case "prop":

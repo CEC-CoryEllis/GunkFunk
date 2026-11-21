@@ -36,6 +36,8 @@ export class LevelWorld {
   private map!: Phaser.Tilemaps.Tilemap;
   private tileset!: Phaser.Tilemaps.Tileset;
   private coverCount = 0;
+  /** Sludge surface sprites by cell, so flooded cells can be restored. */
+  private readonly sludgeSprites = new Map<string, Phaser.GameObjects.Sprite>();
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -126,18 +128,33 @@ export class LevelWorld {
 
   private buildHazardSprites(): void {
     for (const run of horizontalRuns(this.parsed, "sludge")) {
-      for (let i = 0; i < run.length; i++) {
-        const tx = run.tx + i;
-        const isSurface = terrainAt(this.parsed, tx, run.ty - 1) !== "sludge";
-        const sprite = this.scene.add
-          .sprite(tx * TILE_SIZE, run.ty * TILE_SIZE, "sludge")
-          .setOrigin(0, 0)
-          .setDepth(12);
-        sprite.play({
-          key: animationKey("sludge", isSurface ? "surface" : "body"),
-          startFrame: (tx * 2) % 6,
-        });
-      }
+      for (let i = 0; i < run.length; i++) this.addSludgeSprite(run.tx + i, run.ty);
+    }
+  }
+
+  private addSludgeSprite(tx: number, ty: number): void {
+    const isSurface = terrainAt(this.parsed, tx, ty - 1) !== "sludge";
+    this.sludgeSprites.get(`${tx},${ty}`)?.destroy();
+    const sprite = this.scene.add
+      .sprite(tx * TILE_SIZE, ty * TILE_SIZE, "sludge")
+      .setOrigin(0, 0)
+      .setDepth(12);
+    sprite.play({
+      key: animationKey("sludge", isSurface ? "surface" : "body"),
+      startFrame: (tx * 2) % 6,
+    });
+    this.sludgeSprites.set(`${tx},${ty}`, sprite);
+  }
+
+  /**
+   * Floods cells with sludge (a boss caving the floor in): the bricks go, the
+   * sludge comes up, and the neighbours re-autotile around the new pool.
+   */
+  flood(cells: readonly Cell[]): void {
+    this.breakCells(cells);
+    for (const { tx, ty } of cells) {
+      this.parsed.terrain[ty]![tx] = "sludge";
+      this.addSludgeSprite(tx, ty);
     }
   }
 
@@ -164,6 +181,36 @@ export class LevelWorld {
       const tile = this.layer.putTileAt(this.tileIndexFor(tx, ty), tx, ty);
       tile.setCollision(true, true, true, true);
     }
+  }
+
+  /**
+   * Puts cells back the way the map drew them (a boss fight resets after
+   * smashing grates or flooding the floor).
+   */
+  restoreCells(cells: readonly Cell[], kind: TerrainKind): void {
+    for (const { tx, ty } of cells) {
+      this.parsed.terrain[ty]![tx] = kind;
+      this.sludgeSprites.get(`${tx},${ty}`)?.destroy();
+      this.sludgeSprites.delete(`${tx},${ty}`);
+    }
+    for (const { tx, ty } of cells) {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) this.refreshTile(tx + dx, ty + dy);
+      }
+    }
+  }
+
+  private refreshTile(tx: number, ty: number): void {
+    if (tx < 0 || ty < 0 || tx >= this.parsed.widthTiles || ty >= this.parsed.heightTiles) return;
+    const index = this.tileIndexFor(tx, ty);
+    if (index === EMPTY_TILE) {
+      this.layer.removeTileAt(tx, ty);
+      return;
+    }
+    const tile = this.layer.putTileAt(index, tx, ty);
+    const kind = terrainAt(this.parsed, tx, ty);
+    if (kind === "solid") tile.setCollision(true, true, true, true);
+    else if (kind === "oneWay") tile.setCollision(false, false, true, false);
   }
 
   /**

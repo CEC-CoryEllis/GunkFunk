@@ -5,6 +5,16 @@
  */
 import type { SheetSpec } from "./pixel/sprite-sheet";
 import { clogSheetSpec } from "./sprites/bosses/clog-sheet";
+import {
+  armSheetSpec,
+  hullSheetSpec,
+  jetsSheetSpec,
+  legsSheetSpec,
+  lidSheetSpec,
+  shockwaveSheetSpec,
+  springSheetSpec,
+} from "./sprites/bosses/flushotron-sheets";
+import { stinkbottomSheetSpec } from "./sprites/bosses/stinkbottom-sheet";
 import { ballSheetSpec } from "./sprites/bulgo/ball-sheet";
 import { bulgoSheetSpec } from "./sprites/bulgo/bulgo-sheet";
 import { dummySheetSpec } from "./sprites/dummy/dummy-sheet";
@@ -54,5 +64,13 @@ export function spriteCatalog(): SheetSpec[] {
     exitSheetSpec(),
     gateSheetSpec(),
     clogSheetSpec(),
+    hullSheetSpec(),
+    legsSheetSpec(),
+    jetsSheetSpec(),
+    springSheetSpec(),
+    armSheetSpec(),
+    lidSheetSpec(),
+    shockwaveSheetSpec(),
+    stinkbottomSheetSpec(),
   ];
 }

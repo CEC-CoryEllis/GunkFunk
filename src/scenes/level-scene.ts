@@ -109,6 +109,7 @@ export class LevelScene extends Phaser.Scene {
         onPowerUp: (id, active) => this.announcePowerUp(id, active),
       },
       start,
+      session.loadout ?? undefined,
     );
     this.music = new StageMusic(definition.music);
     const stage: PropContext = {
@@ -142,7 +143,7 @@ export class LevelScene extends Phaser.Scene {
       },
       checkpointReached: (x, y) => this.progress.checkpointReached(x, y),
       exitReached: () => this.progress.clear(),
-      bossFight: (arena) => this.progress.bossFight(arena),
+      bossFight: (arena, music) => this.progress.bossFight(arena, music),
       bossStatus: (status) => this.progress.bossStatus(status),
     };
     this.stageContext = stage;
@@ -170,6 +171,7 @@ export class LevelScene extends Phaser.Scene {
       camera: this.cameraDirector,
       session,
       title: definition.title,
+      next: definition.next,
     });
     this.physics.world.on(Phaser.Physics.Arcade.Events.WORLD_STEP, this.fixedUpdate, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
