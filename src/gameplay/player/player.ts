@@ -238,7 +238,7 @@ export class Player implements CameraTarget, Damageable, PickupCollector {
   private resolveCombat(frame: CombatFrame): void {
     if (frame.shot) {
       if (this.movement.state === "ground" && Math.abs(this.body.velocity.x) <= 30) {
-        this.animator.restart("shoot");
+        this.animator.restart(this.movement.crouching ? "crouch_shoot" : "shoot");
       }
       const muzzle = this.held.muzzle(this.x, this.y, this.facing);
       for (const request of shotRequests(frame.shot.level, muzzle, this.facing, this.team)) {
@@ -285,12 +285,8 @@ export class Player implements CameraTarget, Damageable, PickupCollector {
   }
 
   private checkHazards(): void {
-    const rect = this.feetRect();
-    if (this.ctx.level.rectTouches(rect, "sludge")) {
-      this.hazardBounce(1, "sludge");
-    } else if (this.ctx.level.rectTouches(rect, "spikes")) {
-      this.hazardBounce(1, "hurt");
-    }
+    const hazard = this.ctx.level.hazardAt(this.feetRect());
+    if (hazard) this.hazardBounce(1, hazard === "sludge" ? "sludge" : "hurt");
   }
 
   private hazardBounce(damage: number, quip: QuipTrigger): void {

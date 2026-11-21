@@ -23,7 +23,7 @@ export const BULGO: CharacterDefinition = {
       activeFrom: 0.05,
       activeTo: 0.15,
       chainFrom: 0.11,
-      hitbox: { x: 8, y: -32, w: 28, h: 16 },
+      hitbox: { x: 8, y: -30, w: 28, h: 24 },
       damage: 1,
       knockback: { x: 130, y: -80 },
       moveScale: 0.35,

@@ -74,6 +74,7 @@ export class PlayerAnimator {
     if (input.combatAnim) return input.combatAnim;
     if (input.shooting && (m.state === "ground" || m.state === "air")) {
       if (m.state === "air") return "air_shoot";
+      if (m.crouching) return "crouch_shoot";
       return Math.abs(input.vx) > 30 ? "run_shoot" : "shoot";
     }
     switch (m.state) {

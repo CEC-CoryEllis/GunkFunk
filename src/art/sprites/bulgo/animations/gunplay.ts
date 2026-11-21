@@ -34,6 +34,29 @@ const airShoot: BulgoAnimation = {
   ),
 };
 
+/** Low and mean: crouched with the gun out, for shooting rats and blobs. */
+const crouchShoot: BulgoAnimation = {
+  name: "crouch_shoot",
+  frameRate: 12,
+  repeat: 0,
+  poses: [0, 1].map((i) =>
+    pose({
+      y: 4,
+      sy: 0.78,
+      sx: 1.15,
+      headDrop: 3,
+      lean: 2 - i,
+      eyes: "squint",
+      brow: "angry",
+      mouth: i === 0 ? "shout" : "grin",
+      frontArm: { a1: HALF_PI + 0.15, a2: -0.15, stretch: 1.05 - i * 0.1 },
+      backArm: { a1: -0.3, a2: 0.4 },
+      frontFoot: { dx: 3, dy: 0 },
+      backFoot: { dx: -3, dy: 0 },
+    }),
+  ),
+};
+
 /** Wind-back, then the arm fires out like a rubber cannon and the fist balloons. */
 const megaPunch: BulgoAnimation = {
   name: "mega_punch",
@@ -92,4 +115,9 @@ const megaPunch: BulgoAnimation = {
   ],
 };
 
-export const GUNPLAY_ANIMATIONS: readonly BulgoAnimation[] = [runShoot, airShoot, megaPunch];
+export const GUNPLAY_ANIMATIONS: readonly BulgoAnimation[] = [
+  runShoot,
+  airShoot,
+  crouchShoot,
+  megaPunch,
+];

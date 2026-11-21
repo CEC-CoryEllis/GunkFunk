@@ -8,21 +8,25 @@
  *   H  ladder / chain    s  Sock Cannon pickup
  *   ~  toxic sludge      n  Snot Blaster pickup
  *   ^  rusty spikes      c  Chicken Launcher pickup
- *   .  empty (space also works)
+ *   .  empty             R  Sewer Rat       T  Toilet Chomper
+ *                        B  Sludge Blob     G  Turnip Grenadier
+ *                        F  Disco Roach (flying)
  *
  * Spawns stand on the floor of their tile, except pickups, which float in
  * the middle of it.
  */
 import type { MusicTrackId } from "../audio/audio-types";
+import { ENEMY_MAP_CHARS, type EnemyKind } from "../gameplay/enemies/enemy-kinds";
 import type { WeaponId } from "../gameplay/weapons/weapon-ids";
 
 export type TerrainKind = "empty" | "solid" | "oneWay" | "ladder" | "sludge" | "spikes";
 
-export type SpawnKind = "playerStart" | "dummy" | "weaponPickup";
+export type SpawnKind = "playerStart" | "dummy" | "weaponPickup" | "enemy";
 
 export interface SpawnSpec {
   kind: SpawnKind;
   weapon?: WeaponId;
+  enemy?: EnemyKind;
 }
 
 export const TERRAIN_LEGEND: Readonly<Record<string, TerrainKind>> = {
@@ -41,6 +45,12 @@ export const SPAWN_LEGEND: Readonly<Record<string, SpawnSpec>> = {
   s: { kind: "weaponPickup", weapon: "sock" },
   n: { kind: "weaponPickup", weapon: "snot" },
   c: { kind: "weaponPickup", weapon: "chicken" },
+  ...Object.fromEntries(
+    Object.entries(ENEMY_MAP_CHARS).map(([ch, enemy]) => [
+      ch,
+      { kind: "enemy", enemy } satisfies SpawnSpec,
+    ]),
+  ),
 };
 
 export type LevelTheme = "sewer";
@@ -58,6 +68,7 @@ export interface LevelDefinition {
 export interface Spawn {
   kind: SpawnKind;
   weapon?: WeaponId;
+  enemy?: EnemyKind;
   /** Tile coordinates. */
   tx: number;
   ty: number;

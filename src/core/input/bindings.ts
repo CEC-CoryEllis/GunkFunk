@@ -46,7 +46,7 @@ export const CONTROL_HINTS: readonly [string, string][] = [
   ["JUMP", "Z / SPACE  (x2!)"],
   ["PUNCH COMBO", "X  (TAP 3X)"],
   ["MEGA PUNCH", "HOLD X, LET GO"],
-  ["SHOOT", "C  (HOLD)"],
+  ["SHOOT", "C (HOLD)  DOWN+C LOW"],
   ["SWITCH WEAPON", "SHIFT / E"],
   ["SLIDE", "DOWN WHILE RUNNING"],
   ["DROP DOWN", "DOWN + JUMP"],

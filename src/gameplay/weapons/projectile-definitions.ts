@@ -5,7 +5,7 @@
 import type { SfxId } from "../../audio/audio-types";
 import type { ParticleKind } from "../fx/effects";
 
-export type ProjectileKind = "sock" | "snot" | "snotSmall" | "chicken";
+export type ProjectileKind = "sock" | "snot" | "snotSmall" | "chicken" | "stinkBomb";
 
 export type ImpactBehaviour = "vanish" | "splat" | "explode";
 
@@ -118,5 +118,26 @@ export const PROJECTILES: Readonly<Record<ProjectileKind, ProjectileDefinition>>
     particle: "feather",
     words: ["BAWK!", "KA-BAWK!", "CLUCK!"],
     faceVelocity: true,
+  },
+  /** Thrown by Turnip Grenadiers: lobbed, bursts into a cloud of stench. */
+  stinkBomb: {
+    kind: "stinkBomb",
+    sheetKey: "projectiles",
+    anim: "stink_bomb",
+    radius: 4,
+    gravity: 600,
+    maxBounces: 0,
+    bounciness: 0,
+    friction: 1,
+    lifetime: 3,
+    damage: 1,
+    knockback: { x: 120, y: -200 },
+    impact: 0.5,
+    onImpact: "explode",
+    explosionRadius: 20,
+    hitSfx: "burp",
+    particle: "stink",
+    words: ["PEE-YEW!", "STINKY!"],
+    faceVelocity: false,
   },
 };

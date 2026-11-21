@@ -29,6 +29,8 @@ async function run() {
     await shot("02-title-menu");
     await page.keyboard.press("KeyZ");
     await page.waitForFunction(() => window.gunkDebug !== undefined, null, { timeout: 10000 });
+    // Enemies have their own suite (enemies.mjs); keep this one deterministic.
+    await page.evaluate(() => window.gunkDebug.clearEnemies());
     await wait(900);
     await shot("03-stage-intro");
     await wait(1500);
@@ -115,8 +117,35 @@ async function run() {
     p = await player();
     check("pushing into a wall mid-air wall-slides", p.state === "wallSlide", p.state);
     await shot("10-wall-slide");
+
+    // Climb out: wall-jump back and forth until Bulgo lands on the exit ledge
+    // (row 8, top at y = 128). Guards against ceilings that make it impossible.
+    const LEDGE_TOP = 8 * 16;
+    for (let bounce = 0; bounce < 6; bounce++) {
+      let t = 0;
+      do {
+        p = await player();
+        await wait(15);
+        t += 15;
+      } while (p.state !== "wallSlide" && !(p.state === "ground" && p.y <= LEDGE_TOP) && t < 1500);
+      if (p.state !== "wallSlide") break;
+      // Steer toward the opposite wall and jump off this one.
+      await release("left");
+      await release("right");
+      await hold(p.facing > 0 ? "left" : "right");
+      await tap("jump", 200);
+    }
+    await wait(400);
+    p = await player();
+    check(
+      "the wall-jump shaft can be climbed out onto the ledge",
+      p.state === "ground" && p.y <= LEDGE_TOP && p.x > 64 * 16,
+      `${p.state} at ${Math.round(p.x)},${Math.round(p.y)}`,
+    );
+    await shot("10b-shaft-exit");
+    await release("left");
     await release("right");
-    await wait(800);
+    await wait(300);
 
     // Ladder: climb up the ladder at x=73.
     await page.evaluate(() => window.gunkDebug.teleport(73 * 16 + 8, 15 * 16));

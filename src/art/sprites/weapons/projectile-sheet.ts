@@ -22,6 +22,7 @@ export const PROJECTILE_SHEET_KEY = "projectiles";
 const sockPaint = shade(RAMPS.eyeWhite, { bias: 0.25 });
 const slimePaint = shade(RAMPS.sludge, { bias: 0.15 });
 const chickenPaint = shade(RAMPS.gold, { bias: 0.15 });
+const stinkPaint = shade(RAMPS.sludge, { bias: -0.15 });
 
 /** A sock flying right, toe first, its cuff flapping behind. */
 function sockFrame(c: PixelCanvas, flap: number): void {
@@ -65,6 +66,16 @@ function chickenFrame(c: PixelCanvas, legSwing: number): void {
   line(c, 4, 9, 7, 8, RAMPS.gold[1]!); // wing crease
 }
 
+/** The turnip's stink bomb: a green ball with a fizzing fuse. */
+function stinkBombFrame(c: PixelCanvas, spark: boolean): void {
+  outlinedLayer(c, OUTLINE, (l) => fillCircle(l, 8, 9, 3.6, stinkPaint));
+  c.plot(7, 7, RAMPS.sludge[4]!);
+  c.plot(9, 11, RAMPS.sludge[0]!);
+  line(c, 9, 5, 10, 3, RAMPS.pipe[2]!);
+  c.plot(10, 2, spark ? WHITE : RAMPS.fire[3]!);
+  if (spark) c.plot(11, 2, RAMPS.gold[3]!);
+}
+
 export function projectileSheetSpec(): SheetSpec {
   return {
     key: PROJECTILE_SHEET_KEY,
@@ -101,6 +112,12 @@ export function projectileSheetSpec(): SheetSpec {
         frames: [-1, 0, 1, 0].map((f) => (c) => chickenFrame(c, f)),
       },
       { name: "dummy_head", frameRate: 1, repeat: 0, frames: [(c) => drawRatHead(c, 8, 9, "x")] },
+      {
+        name: "stink_bomb",
+        frameRate: 12,
+        repeat: -1,
+        frames: [true, false].map((spark) => (c: PixelCanvas) => stinkBombFrame(c, spark)),
+      },
     ],
   };
 }

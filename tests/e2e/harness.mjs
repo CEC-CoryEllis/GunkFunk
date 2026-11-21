@@ -74,7 +74,7 @@ export function screenshotDir(name) {
 }
 
 /** Launches Chromium, opens the game and returns a page plus driving helpers. */
-export async function openGame(port) {
+export async function openGame(port, { stage } = {}) {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 768, height: 432 } });
   const consoleErrors = [];
@@ -82,7 +82,7 @@ export async function openGame(port) {
     if (msg.type() === "error") consoleErrors.push(msg.text());
   });
   page.on("pageerror", (err) => consoleErrors.push(String(err)));
-  await page.goto(`http://localhost:${port}/?debug`);
+  await page.goto(`http://localhost:${port}/?debug${stage ? `&stage=${stage}` : ""}`);
   await page.waitForSelector("canvas");
 
   const wait = (ms) => page.waitForTimeout(ms);
@@ -103,13 +103,18 @@ export async function openGame(port) {
       await helpers.release(action);
     },
     shot: (dir, name) => page.screenshot({ path: join(dir, `${name}.png`) }),
-    /** Title → menu → start game; resolves once the stage's test hooks exist. */
-    async startStage() {
+    /**
+     * Title → menu → start game; resolves once the stage's test hooks exist.
+     * Enemies are cleared unless `keepEnemies` is set, so scenario tests that
+     * aren't about enemies stay deterministic.
+     */
+    async startStage({ keepEnemies = false } = {}) {
       await wait(1200);
       await page.keyboard.press("KeyZ");
       await wait(400);
       await page.keyboard.press("KeyZ");
       await page.waitForFunction(() => window.gunkDebug !== undefined, null, { timeout: 10000 });
+      if (!keepEnemies) await debug(() => window.gunkDebug.clearEnemies());
     },
   };
   return helpers;

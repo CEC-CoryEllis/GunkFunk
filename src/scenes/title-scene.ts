@@ -11,7 +11,7 @@ import { CONTROL_HINTS, PLAYER_ONE_BINDINGS } from "../core/input/bindings";
 import { GameSession } from "../core/game-session";
 import { InputSource } from "../core/input/input-source";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config/display";
-import { FIRST_LEVEL_ID } from "../levels/level-registry";
+import { startingLevelId } from "../levels/level-registry";
 import { Menu } from "../ui/menu";
 import { pixelText } from "../ui/text";
 import { type LevelSceneData, SceneKeys } from "./scene-keys";
@@ -133,7 +133,7 @@ export class TitleScene extends Phaser.Scene {
     this.cameras.main.flash(250, 255, 255, 255);
     this.cameras.main.fadeOut(350, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      const data: LevelSceneData = { levelId: FIRST_LEVEL_ID };
+      const data: LevelSceneData = { levelId: startingLevelId() };
       this.scene.start(SceneKeys.Level, data);
     });
   }

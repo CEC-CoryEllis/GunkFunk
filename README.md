@@ -8,7 +8,7 @@ city sewers. **Bulgo** — a lumpy green mutant with a gorilla torso, stubby leg
 and boundless dim enthusiasm — crawls out of the muck to stop him. Mostly by accident.
 
 > **Status:** early development. The engine, Bulgo (fully animated), combat with three
-> upgradeable weapons, and a test stage full of training dummies are playable. See [`CHECKLIST.md`](CHECKLIST.md) for exactly what works and what's
+> upgradeable weapons, five enemy types and a test stage to fight them in are playable. See [`CHECKLIST.md`](CHECKLIST.md) for exactly what works and what's
 > next, and [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) for the architecture.
 
 ## Requirements
@@ -54,6 +54,7 @@ npm run preview
 | Punch combo (tap ×3: jab → uppercut → belly bump) | X / K                          | X / Square                 |
 | Mega punch (hold punch, release when he flashes)  | Hold X / K                     | Hold X / Square            |
 | Shoot (hold for auto-fire)                        | C / L                          | B / Circle                 |
+| Crouch-shoot (hits rats and blobs)                | Down + C                       | Down + B                   |
 | Switch weapon                                     | Shift / E                      | LB / RB                    |
 | Slide                                             | Down while running             | Down while running         |
 | Drop through grates                               | Down + Jump                    | Down + A                   |
@@ -86,6 +87,13 @@ Individual scripts: `npm run format`, `npm run lint`, `npm run typecheck`, `npm 
 - **Combat test** (`tests/e2e/combat.mjs`) collects and upgrades weapons, fires all three
   at training dummies, switches weapons, throws the charged mega punch and checks that a
   knocked-off dummy head bowls over its neighbour.
+- **Enemy test** (`tests/e2e/enemies.mjs`) runs in the Training Arena and stages one scenario
+  per enemy (rat charge, toilet lid armour, blob split and snot healing, turnip stink bombs,
+  roach swoop), plus bowling, the kill combo and sludge deaths.
+
+Debug builds can open a specific stage with `?debug&stage=<id>` — `arena` is a flat sandbox
+for trying enemies out (`window.gunkDebug.spawnEnemy("rat", x, y)` in the console).
+
 - **Audio render test** (`tests/e2e/audio-render.mjs`) renders every track, stinger and
   sound effect offline, checks levels/clipping/silence, and writes WAVs to `audio-export/`.
 

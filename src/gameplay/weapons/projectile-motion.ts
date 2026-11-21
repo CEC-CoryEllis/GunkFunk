@@ -97,3 +97,24 @@ export function launchVelocity(
   const radians = (angleDegrees * Math.PI) / 180;
   return { vx: Math.cos(radians) * speed * facing, vy: -Math.sin(radians) * speed };
 }
+
+/**
+ * Launch velocity that lobs a projectile from the origin onto a target `dx`
+ * pixels away horizontally and `dy` pixels away vertically (screen space, +y
+ * down) at a fixed launch angle. Returns null if the angle can't reach the
+ * target. Used by enemies that throw things in arcs.
+ */
+export function lobVelocity(
+  dx: number,
+  dy: number,
+  gravity: number,
+  angleDegrees: number,
+): { vx: number; vy: number } | null {
+  const theta = (angleDegrees * Math.PI) / 180;
+  const distance = Math.abs(dx);
+  const rise = -dy; // positive = target is above
+  const denominator = 2 * Math.cos(theta) ** 2 * (distance * Math.tan(theta) - rise);
+  if (distance < 1 || denominator <= 0) return null;
+  const speed = Math.sqrt((gravity * distance * distance) / denominator);
+  return { vx: Math.sign(dx) * Math.cos(theta) * speed, vy: -Math.sin(theta) * speed };
+}

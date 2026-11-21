@@ -43,7 +43,9 @@ export class CombatWorld {
   strike(area: Rect, hit: HitInfo): StrikeOutcome[] {
     const outcomes: StrikeOutcome[] = [];
     let memory = this.struck.get(hit.key);
-    for (const target of this.targets) {
+    // Iterate a snapshot: a hit can spawn new targets (a blob splitting), and
+    // those must not be struck by the very hit that created them.
+    for (const target of Array.from(this.targets)) {
       if (target.team === hit.team || !target.targetable) continue;
       if (memory?.targets.has(target)) continue;
       if (!overlaps(area, target.hurtbox())) continue;
