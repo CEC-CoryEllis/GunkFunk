@@ -8,6 +8,7 @@ export const GameEvents = {
   HealthChanged: "health-changed",
   LivesChanged: "lives-changed",
   ScoreChanged: "score-changed",
+  GemsChanged: "gems-changed",
   StageIntro: "stage-intro",
   WeaponChanged: "weapon-changed",
 } as const;

@@ -20,6 +20,7 @@ import {
   knockbackFor,
 } from "../combat/hit-types";
 import type { PickupCollector } from "../pickups/weapon-pickup";
+import type { PropPlayer } from "../props/prop-context";
 import type { StageContext } from "../stage/stage-context";
 import { HeldWeapon } from "../weapons/held-weapon";
 import { shotRequests } from "../weapons/shot-pattern";
@@ -47,7 +48,7 @@ export interface PlayerCallbacks {
   onWeaponCollected(outcome: CollectOutcome): void;
 }
 
-export class Player implements CameraTarget, Damageable, PickupCollector {
+export class Player implements CameraTarget, Damageable, PickupCollector, PropPlayer {
   readonly team = "player" as const;
   readonly sprite: Phaser.Physics.Arcade.Sprite;
   readonly movement: MovementController;
@@ -119,6 +120,34 @@ export class Player implements CameraTarget, Damageable, PickupCollector {
 
   bodyRect(): Rect {
     return this.hurtbox();
+  }
+
+  // ── PropPlayer: how the world pushes Bulgo around ─────────────────────────
+  get falling(): boolean {
+    return this.body.velocity.y > 0;
+  }
+
+  launch(speed: number): void {
+    if (!this.targetable) return;
+    this.movement.launch();
+    this.movement.refreshAirJumps();
+    this.body.setVelocityY(-speed);
+  }
+
+  addLift(acceleration: number): void {
+    if (this.targetable) this.movement.addLift(acceleration);
+  }
+
+  carry(dx: number, dy: number): void {
+    this.sprite.x += dx;
+    this.sprite.y += dy;
+  }
+
+  heal(amount: number): boolean {
+    if (!this.targetable || this.health.health >= this.health.maxHealth) return false;
+    this.health.heal(amount);
+    this.callbacks.onHealthChanged(this.health.health, this.health.maxHealth);
+    return true;
   }
 
   takeHit(hit: HitInfo): HitResult {

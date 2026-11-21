@@ -38,7 +38,8 @@ export function readSensors(
   return {
     vx: body.velocity.x,
     vy: body.velocity.y,
-    onFloor: body.blocked.down,
+    // `touching` covers standing on moving bodies (platforms), `blocked` covers tiles.
+    onFloor: body.blocked.down || body.touching.down,
     onPassThrough,
     wallLeft: body.blocked.left || wallProbe(left - PROBE),
     wallRight: body.blocked.right || wallProbe(right + PROBE),

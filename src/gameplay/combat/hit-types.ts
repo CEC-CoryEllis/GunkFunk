@@ -6,7 +6,11 @@
  */
 import type { SfxId } from "../../audio/audio-types";
 
-export type Team = "player" | "enemy" | "neutral";
+/**
+ * Who a hit belongs to. Targets are never on the "environment" team, so
+ * environmental hits (barrel blasts, toppling vending machines) hurt everyone.
+ */
+export type Team = "player" | "enemy" | "neutral" | "environment";
 
 export type HitKind = "melee" | "projectile" | "explosion" | "hazard" | "launched";
 

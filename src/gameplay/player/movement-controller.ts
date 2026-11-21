@@ -49,6 +49,11 @@ export interface MovementOutput {
   events: MovementEvent[];
 }
 
+/** Updrafts can't push you up faster than this. */
+const MAX_LIFT_SPEED = 300;
+/** Fraction of vertical speed bled off per second while in an updraft. */
+const LIFT_DRAG = 4;
+
 function approach(value: number, target: number, step: number): number {
   return value < target ? Math.min(value + step, target) : Math.max(value - step, target);
 }
@@ -70,6 +75,8 @@ export class MovementController {
   private jumpBuffer = 0;
   private jumpHeld = false;
   private slideTimer = 0;
+  /** Upward acceleration from updrafts this step (fans); consumed by applyGravity. */
+  private lift = 0;
   private dropTimer = 0;
   private peakFallSpeed = 0;
 
@@ -80,6 +87,11 @@ export class MovementController {
     this.state = "air";
     this.coyote = 0;
     this.jumpHeld = false;
+  }
+
+  /** Adds upward acceleration for the next step (vent fans). Stacks within a step. */
+  addLift(acceleration: number): void {
+    this.lift += acceleration;
   }
 
   /** Refunds the air jump (enemy bounces, springs). */
@@ -259,7 +271,9 @@ export class MovementController {
     moveX: number,
   ): number {
     const t = this.tuning;
-    if (s.onFloor && vy >= 0 && this.state !== "air") {
+    const lift = this.lift;
+    this.lift = 0;
+    if (s.onFloor && vy >= 0 && this.state !== "air" && lift <= t.gravity) {
       // Keep pressing into the floor: Arcade only resolves (and reports) tile
       // contact when the body moves into it, so a zero velocity would make the
       // body flicker between grounded and airborne every other step.
@@ -270,9 +284,16 @@ export class MovementController {
       vy *= t.jumpCutMultiplier;
     }
     let gravity = t.gravity;
-    if (vy > 0) gravity *= t.fallGravityMultiplier;
+    // Snappier falls — except in an updraft, where it would make hovering bob.
+    if (vy > 0 && lift === 0) gravity *= t.fallGravityMultiplier;
     if (Math.abs(vy) < t.apexThreshold && input.held.jump) gravity *= t.apexGravityMultiplier;
-    vy = Math.min(vy + gravity * dt, t.maxFallSpeed);
+    vy = Math.min(vy + (gravity - lift) * dt, t.maxFallSpeed);
+    if (lift > 0) {
+      // Air drag in the updraft settles the body into a hover instead of a yo-yo.
+      vy -= vy * LIFT_DRAG * dt;
+      vy = Math.max(vy, -MAX_LIFT_SPEED);
+      if (vy < 0 && this.state === "ground") this.state = "air";
+    }
 
     // Wall slide: airborne, falling, pushing into a wall.
     const pushingWall = (moveX < 0 && s.wallLeft) || (moveX > 0 && s.wallRight);
